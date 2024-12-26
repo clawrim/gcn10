@@ -26,7 +26,7 @@ The **SCS Runoff Calculator** computes runoff depth using the Soil Conservation 
 
 ## Compilation
 
-This project is written in **C** and relies on the **GDAL library** for raster data handling. Ensure GDAL is installed on your system before compiling.
+This project is written in **C** and relies on the **GDAL** and **OpenMP**  for raster data handling and parallel processing. Ensure the neccessary libraries are  installed on your system before compiling.
 
 ### Compile the Program
 Use the included `Makefile` to compile the program:
