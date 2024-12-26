@@ -41,9 +41,33 @@ Outputs:
   - `cn_rasters_undrained/`
 
 Usage:
-- Process all blocks starting from a specific block ID:
-  ```python
-  main()
+
+# --- Serial Script Usage (generate_curve_number.py) ---
+# Process all blocks starting from a specific block ID:
+# (Replace <block_id> with the desired starting block ID)
+  python generate_curve_number.py --start_block_id <block_id>
+
+# Process specific blocks by providing a list of block IDs:
+# (Replace <block_id1>, <block_id2>, etc., with desired block IDs)
+  python generate_curve_number.py --block_ids <block_id1> <block_id2> ...
+
+# Process all blocks starting from a specific block ID and include additional filters:
+# Example: Start from block ID 500 and only process IDs 501 and 502
+  python generate_curve_number.py --start_block_id 500 --block_ids 501 502
+
+
+# --- Parallel Script Usage (parallel_cn.py) ---
+# Run the script to process all blocks starting from a specific block ID:
+# (Replace <block_id> with the desired starting block ID)
+  python parallel_cn.py --start_block_id <block_id>
+
+# Process specific blocks by providing a file containing block IDs:
+# (Replace <file_path> with the path to your block IDs file)
+  python parallel_cn.py --block_ids_file <file_path>
+
+# Specify the number of parallel processes to use:
+# (Replace <num_processes> with the number of processes you want)
+  python parallel_cn.py --processes <num_processes>
 
 """
 
