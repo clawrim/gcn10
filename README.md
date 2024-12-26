@@ -16,12 +16,11 @@ The GCN10 dataset provides 18 global raster maps tailored to distinct land cover
 
 ## Repository Contents
 1. **Scripts**:
-   - `generate_curve_number.py`: Generates curve number rasters blockwise (serial).
-   - `parallel_cn.py`: Parallelized generation of curve number rasters.
-   - `scs_runoff`: Calculates runoff using the SCS Curve Number method.
-2. **Documentation**: Instructions for usage and integration.
+   - `serial-cn-processing`: Generates curve number rasters blockwise (serial).
+   - `parallel-cn-processing`: Parallelized generation of curve number rasters.
+   - `scs-cn-method`: Calculates runoff using the SCS Curve Number method.
+2. **Documentation**: All the instructions are provided either in the script or in a separate local REAMDE file.
 3. **Sample Data**: Example rasters for testing and validation.
-4. **Validation Results**: Performance tests across hydrological scenarios.
 
 ---
 
