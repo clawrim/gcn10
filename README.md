@@ -1,32 +1,34 @@
-# GCN10
-Global 10m Curve Number Dataset Repository
+# GCN10: Global Curve Number Dataset
 
-Welcome to the Global Curve Number Dataset Repository! This repository contains the code and resources for generating a high-resolution, open-source global curve number dataset designed to improve runoff estimation and hydrological modeling worldwide.
-Overview
+Welcome to the **Global Curve Number Dataset Repository**! This repository contains tools and resources to generate a high-resolution, open-source global curve number dataset designed to enhance runoff estimation and hydrological modeling across diverse regions.
 
-The dataset includes 18 global raster maps tailored to distinct land covers, soil properties, and hydrological conditions. It is designed to support research, policy-making, and water resource management by offering scalable and consistent integration into hydrological models.
-Features
+## Overview
 
-1. Global high-resolution curve number dataset
-2. Open-source and GIS-agnostic
-3. Applicable to diverse climatic regions, land uses, and soil types
-4. Tailored to hydrological scenarios for improved runoff estimation
+The GCN10 dataset provides 18 global raster maps tailored to distinct land cover types, soil properties, and hydrological conditions. It is optimized for integration into hydrological models and supports research, policy-making, and water resource management.
 
-Repository Contents
-1. Code: Scripts for dataset generation and validation
-2. Documentation: Instructions for using and integrating the dataset
-3. Dataset Previews: Sample files and metadata
-4. Validation: Results from performance testing across hydrological scenarios
+### Key Features
+1. High-resolution global curve number dataset.
+2. Open-source and GIS-agnostic, compatible with common hydrological models.
+3. Supports diverse climatic regions, land uses, and soil types.
+4. Includes tools for generating curve number rasters blockwise and calculating runoff.
 
-Getting Started
+---
 
-    Clone the repository:
+## Repository Contents
+1. **Scripts**:
+   - `generate_curve_number.py`: Generates curve number rasters blockwise (serial).
+   - `parallel_cn.py`: Parallelized generation of curve number rasters.
+   - `scs_runoff`: Calculates runoff using the SCS Curve Number method.
+2. **Documentation**: Instructions for usage and integration.
+3. **Sample Data**: Example rasters for testing and validation.
+4. **Validation Results**: Performance tests across hydrological scenarios.
 
-    git clone https://github.com/mabdazzam/GCN10
+---
 
-Contributing
+## Getting Started
 
-Contributions are welcome! If you encounter issues or have suggestions for improvement, feel free to open an issue or submit a pull request.
-License
-
-This project is licensed under the MIT License.
+### Clone the Repository
+```bash
+git clone https://github.com/mabdazzam/GCN10
+cd GCN10
+```
