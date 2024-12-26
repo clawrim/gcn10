@@ -22,11 +22,7 @@ Getting Started
 
     Clone the repository:
 
-    git clone https://github.com/<your-username>/global-curve-number-dataset.git
-    cd global-curve-number-dataset
-
-    Follow the instructions in the docs/ directory to generate or use the dataset.
-    Explore the dataset using your preferred GIS software.
+    git clone https://github.com/mabdazzam/GCN10
 
 Contributing
 
