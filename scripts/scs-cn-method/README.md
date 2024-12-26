@@ -32,16 +32,18 @@ This project is written in **C** and relies on the **GDAL library** for raster d
 Use the included `Makefile` to compile the program:
 ```bash
 make
+```
 
 To remove the compiled files:
 ```bash
 make clean
+```
 
 ### Usage
 ```bash
 ./scs_runoff <rainfall.tif> <curve_number.tif> <output_runoff.tif>
-
-example 
+```
+Example using the files provided in the test directory
 ```bash
 ./scs_runoff test/rainfall.tif test/cn_p_iii_2280.tif test/runoff.tif
-
+```
