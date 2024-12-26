@@ -1,3 +1,52 @@
+"""
+Script: generate_curve_number.py
+Author: Abdullah Azzam
+Email: abdazzam@nmsu.edu
+
+Description:
+This script generates Curve Numbers (CN) serially, blockwise, based on block information provided in the ESA extent blocks shapefile (`esa_extent_blocks.shp`). 
+For each block, it performs the following operations:
+1. Loads raster data from the HYSOGs (soil data) and ESA WorldCover (land cover data) datasets.
+2. Resamples the HYSOGs data to match the resolution and extent of the ESA raster data.
+3. Modifies the HYSOGs data based on hydrologic soil group (HSG) conditions:
+   - `Drained` conditions: Soil groups are adjusted based on specific rules.
+   - `Undrained` conditions: Soil groups are modified differently for this condition.
+4. Applies a lookup table based on hydrologic condition (`hc`) and antecedent runoff condition (`arc`) to compute Curve Numbers.
+5. Generates 9 Curve Number rasters for each block, corresponding to combinations of:
+   - Hydrologic conditions (`hc`): `poor (p)`, `fair (f)`, `good (g)`
+   - Antecedent runoff conditions (`arc`): `i`, `ii`, `iii`
+
+   In total, these combinations are:
+   - `p_i`, `p_ii`, `p_iii`
+   - `f_i`, `f_ii`, `f_iii`
+   - `g_i`, `g_ii`, `g_iii`
+
+6. Saves the output Curve Number rasters as GeoTIFF files in separate directories for `drained` and `undrained` conditions, using the naming convention `cn_{hc}_{arc}_{block_id}.tif`.
+
+Additional Features:
+- Progress bar: Tracks the processing of blocks.
+- Skips blocks that have already been processed (if all expected output files exist).
+- Skips blocks without relevant hydrologic soil group (HSG) data to improve efficiency.
+
+Inputs:
+- ESA WorldCover dataset (`esa_worldcover_2021.vrt`): Global land cover data.
+- HYSOGs250m dataset (`HYSOGs250m.tif`): Soil properties raster data.
+- Lookup tables (`default_lookup_{hc}_{arc}.csv`): Provide the mapping between land cover, soil groups, and Curve Numbers.
+- ESA extent blocks shapefile (`esa_extent_blocks.shp`): Defines the spatial extent of each block.
+
+Outputs:
+- 9 GeoTIFF files per block (total of 18 per block, including `drained` and `undrained` conditions).
+- Output directories:
+  - `cn_rasters_drained/`
+  - `cn_rasters_undrained/`
+
+Usage:
+- Process all blocks starting from a specific block ID:
+  ```python
+  main()
+
+"""
+
 from osgeo import gdal, ogr, osr
 import geopandas as gpd
 import numpy as np
