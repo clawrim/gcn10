@@ -1,3 +1,4 @@
+// This GDAL I/O is from meshed (https://github.com/HuidaeCho/meshed) with slight modifications
 
 #include "header.h"
 #include <omp.h>
