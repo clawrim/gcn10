@@ -25,6 +25,7 @@ This script generates Curve Numbers (CN) in parallel, blockwise, using multiproc
      - `p_i`, `p_ii`, `p_iii`
      - `f_i`, `f_ii`, `f_iii`
      - `g_i`, `g_ii`, `g_iii`
+   - This is done for both drained and undrained conditions on the areas with dual HSGs. 
 
 4. **Parallel Processing**:
    - Utilizes the `multiprocessing` library to distribute block processing across multiple CPU cores.
