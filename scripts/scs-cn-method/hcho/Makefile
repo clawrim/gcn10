@@ -1,0 +1,22 @@
+ifeq ($(OS),Windows_NT)
+    GDAL_CFLAGS=-I/c/OSGeo4W/include
+    GDAL_LIBS=/c/OSGeo4W/lib/gdal_i.lib
+    EXT=.exe
+else
+    GDAL_LIBS=`gdal-config --libs`
+    GDAL_CFLAGS=`gdal-config --cflags`
+endif
+
+CFLAGS=-Wall -O3 -fopenmp $(GDAL_CFLAGS)
+LDFLAGS=-O3 -fopenmp -lm
+
+# Default target
+all: scs_runoff$(EXT)
+
+# Clean target
+clean:
+	$(RM) *.o scs_runoff$(EXT)
+
+# Build the executable
+scs_runoff$(EXT): main.o raster.o runoff.o gettimeofday.o timeval_diff.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(GDAL_LIBS)
