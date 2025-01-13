@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <gdal.h>
+#include "calculate_scs_runoff.c"
+
+void read_raster(const char* filename, double** data, int* rows, int* cols, double* no_data_value) {
+    GDALDatasetH dataset = GDALOpen(filename, GA_ReadOnly);
+    if (dataset == NULL) {
+        fprintf(stderr, "Error: Unable to open raster file %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    GDALRasterBandH band = GDALGetRasterBand(dataset, 1);
+    *rows = GDALGetRasterYSize(dataset);
+    *cols = GDALGetRasterXSize(dataset);
+    *no_data_value = GDALGetRasterNoDataValue(band, NULL);
+
+    *data = (double*)malloc((*rows) * (*cols) * sizeof(double));
+    if (*data == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        GDALClose(dataset);
+        exit(EXIT_FAILURE);
+    }
+
+    if (GDALRasterIO(band, GF_Read, 0, 0, *cols, *rows, *data, *cols, *rows, GDT_Float64, 0, 0) != CE_None) {
+        fprintf(stderr, "Error: Failed to read raster data\n");
+        free(*data);
+        GDALClose(dataset);
+        exit(EXIT_FAILURE);
+    }
+
+    GDALClose(dataset);
+}
+
+void write_raster(const char* filename, const double* data, int rows, int cols, double no_data_value, const char* ref_filename) {
+    GDALAllRegister();
+    GDALDatasetH ref_dataset = GDALOpen(ref_filename, GA_ReadOnly);
+    if (ref_dataset == NULL) {
+        fprintf(stderr, "Error: Unable to open reference raster file %s\n", ref_filename);
+        exit(EXIT_FAILURE);
+    }
+
+    const char* format = "GTiff";
+    GDALDriverH driver = GDALGetDriverByName(format);
+    GDALDatasetH output_dataset = GDALCreate(driver, filename, cols, rows, 1, GDT_Float64, NULL);
+
+    if (output_dataset == NULL) {
+        fprintf(stderr, "Error: Unable to create output raster file %s\n", filename);
+        GDALClose(ref_dataset);
+        exit(EXIT_FAILURE);
+    }
+
+    double geo_transform[6];
+    GDALGetGeoTransform(ref_dataset, geo_transform);
+    GDALSetGeoTransform(output_dataset, geo_transform);
+
+    const char* projection = GDALGetProjectionRef(ref_dataset);
+    GDALSetProjection(output_dataset, projection);
+
+    GDALRasterBandH output_band = GDALGetRasterBand(output_dataset, 1);
+    GDALSetRasterNoDataValue(output_band, no_data_value);
+
+    if (GDALRasterIO(output_band, GF_Write, 0, 0, cols, rows, (void*)data, cols, rows, GDT_Float64, 0, 0) != CE_None) {
+        fprintf(stderr, "Error: Failed to write raster data\n");
+        GDALClose(output_dataset);
+        GDALClose(ref_dataset);
+        exit(EXIT_FAILURE);
+    }
+
+    GDALClose(output_dataset);
+    GDALClose(ref_dataset);
+}
+
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <rainfall.tif> <curve_number.tif> <output_runoff.tif>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char* rainfall_file = argv[1];
+    const char* cn_file = argv[2];
+    const char* output_file = argv[3];
+
+    GDALAllRegister();
+
+    // Variables to store raster data
+    double *rainfall, *curve_number, *runoff;
+    int rows, cols;
+    double no_data_value;
+
+    // Read input rasters
+    read_raster(rainfall_file, &rainfall, &rows, &cols, &no_data_value);
+    read_raster(cn_file, &curve_number, &rows, &cols, &no_data_value);
+
+    // Allocate memory for output raster
+    runoff = (double*)malloc(rows * cols * sizeof(double));
+    if (runoff == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        free(rainfall);
+        free(curve_number);
+        return EXIT_FAILURE;
+    }
+
+    // Calculate runoff
+    calculate_scs_runoff(rows, cols, rainfall, curve_number, runoff);
+
+    // Write output raster
+    write_raster(output_file, runoff, rows, cols, no_data_value, rainfall_file);
+
+    // Free memory
+    free(rainfall);
+    free(curve_number);
+    free(runoff);
+
+    printf("Runoff calculation complete. Output written to %s\n", output_file);
+    return EXIT_SUCCESS;
+}
