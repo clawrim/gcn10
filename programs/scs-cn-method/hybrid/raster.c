@@ -36,53 +36,52 @@ void ensure_directory_exists(const char *path) {
 
 void distribute_and_process_blocks(const char *cn_list_file, const char *rainfall_list_file, const char *output_dir, int num_threads) {
     int rank, size; MPI_Comm_rank(MPI_COMM_WORLD, &rank); MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (rank == 0) { struct stat st = {0}; if (stat(output_dir, &st) == -1) mkdir(output_dir, 0777); }
+    if (rank == 0 && mkdir(output_dir, 0777) && errno != EEXIST) { fprintf(stderr, "Rank 0: Failed to create %s\n", output_dir); MPI_Finalize(); exit(EXIT_FAILURE); }
     MPI_Barrier(MPI_COMM_WORLD);
 
     FILE *cn_fp = fopen(cn_list_file, "r"), *rain_fp = fopen(rainfall_list_file, "r");
-    if (!cn_fp || !rain_fp) { fprintf(stderr, "MPI Rank %d: Error opening raster list files!\n", rank); MPI_Finalize(); exit(EXIT_FAILURE); }
+    if (!cn_fp || !rain_fp) { fprintf(stderr, "Rank %d: Error opening list files\n", rank); if (cn_fp) fclose(cn_fp); if (rain_fp) fclose(rain_fp); MPI_Finalize(); exit(EXIT_FAILURE); }
 
-    int total_blocks = 0; char cn_file[256], rainfall_file[256];
-    while (fgets(cn_file, sizeof(cn_file), cn_fp) && fgets(rainfall_file, sizeof(rainfall_file), rain_fp)) total_blocks++;
+    char cn_file[256], rainfall_file[256]; int total_blocks = 0;
+    while (fgets(cn_file, 256, cn_fp) && fgets(rainfall_file, 256, rain_fp)) total_blocks++;
     rewind(cn_fp); rewind(rain_fp);
 
+    const char *slash = output_dir[strlen(output_dir)-1] == '/' ? "" : "/";
     if (size == 1) {
         for (int i = 0; i < total_blocks; i++) {
-            fgets(cn_file, sizeof(cn_file), cn_fp); fgets(rainfall_file, sizeof(rainfall_file), rain_fp);
-            cn_file[strcspn(cn_file, "\n")] = 0; rainfall_file[strcspn(rainfall_file, "\n")] = 0;
-            Raster *cn = read_raster_mpi(cn_file, rank), *rain = read_raster_mpi(rainfall_file, rank);
-            Raster *runoff = allocate_raster(cn->nrows, cn->ncols, cn->no_data_value);
-            calculate_runoff(rain, cn, runoff);
-            char out_file[300]; snprintf(out_file, sizeof(out_file), "%s%soutput_rank%d_block%d.tif", output_dir, output_dir[strlen(output_dir)-1] == '/' ? "" : "/", rank, i);
-            write_raster_mpi(out_file, runoff, cn_file, rank, i);
-            free_raster(cn); free_raster(rain); free_raster(runoff);
+            fgets(cn_file, 256, cn_fp); fgets(rainfall_file, 256, rain_fp);
+            cn_file[strcspn(cn_file, "\n")] = rainfall_file[strcspn(rainfall_file, "\n")] = 0;
+            Raster *cn = read_raster_mpi(cn_file, 0), *rain = read_raster_mpi(rainfall_file, 0), *runoff;
+            if (cn && rain && (runoff = allocate_raster(cn->nrows, cn->ncols, cn->no_data_value))) {
+                calculate_runoff(rain, cn, runoff);
+                char out_file[300]; snprintf(out_file, 300, "%s%soutput_rank0_block%d.tif", output_dir, slash, i);
+                write_raster_mpi(out_file, runoff, cn_file, 0, i);
+                free_raster(runoff);
+            }
+            free_raster(cn); free_raster(rain);
         }
-        fclose(cn_fp); fclose(rain_fp);
-        return;
-    }
-
-    if (rank == 0) {
+    } else if (rank == 0) {
         int next_block = 0, finished_blocks = 0;
-        for (int i = 1; i < size && next_block < total_blocks; i++, next_block++) MPI_Send(&next_block, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        for (int i = 1; i < size && next_block < total_blocks; i++) MPI_Send(&next_block, 1, MPI_INT, i, 0, MPI_COMM_WORLD), next_block++;
         while (finished_blocks < total_blocks) {
-            int worker_rank, block; MPI_Status status;
-            MPI_Recv(&block, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
-            worker_rank = status.MPI_SOURCE; finished_blocks++;
-            int signal = (next_block < total_blocks) ? next_block++ : -1;
-            MPI_Send(&signal, 1, MPI_INT, worker_rank, 0, MPI_COMM_WORLD);
+            MPI_Status status; int block; MPI_Recv(&block, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+            int signal = next_block < total_blocks ? next_block++ : -1;
+            MPI_Send(&signal, 1, MPI_INT, status.MPI_SOURCE, 0, MPI_COMM_WORLD); finished_blocks++;
         }
     } else {
         while (1) {
             int block; MPI_Status status; MPI_Recv(&block, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-            if (block < 0) { printf("MPI Rank %d: Stop signal received\n", rank); fflush(stdout); break; }
-            fgets(cn_file, sizeof(cn_file), cn_fp); fgets(rainfall_file, sizeof(rainfall_file), rain_fp);
-            cn_file[strcspn(cn_file, "\n")] = 0; rainfall_file[strcspn(rainfall_file, "\n")] = 0;
-            Raster *cn = read_raster_mpi(cn_file, rank), *rain = read_raster_mpi(rainfall_file, rank);
-            Raster *runoff = allocate_raster(cn->nrows, cn->ncols, cn->no_data_value);
-            calculate_runoff(rain, cn, runoff);
-            char out_file[300]; snprintf(out_file, sizeof(out_file), "%s%soutput_rank%d_block%d.tif", output_dir, output_dir[strlen(output_dir)-1] == '/' ? "" : "/", rank, block);
-            write_raster_mpi(out_file, runoff, cn_file, rank, block);
-            free_raster(cn); free_raster(rain); free_raster(runoff);
+            if (block < 0) break;
+            fgets(cn_file, 256, cn_fp); fgets(rainfall_file, 256, rain_fp);
+            cn_file[strcspn(cn_file, "\n")] = rainfall_file[strcspn(rainfall_file, "\n")] = 0;
+            Raster *cn = read_raster_mpi(cn_file, rank), *rain = read_raster_mpi(rainfall_file, rank), *runoff;
+            if (cn && rain && (runoff = allocate_raster(cn->nrows, cn->ncols, cn->no_data_value))) {
+                calculate_runoff(rain, cn, runoff);
+                char out_file[300]; snprintf(out_file, 300, "%s%soutput_rank%d_block%d.tif", output_dir, slash, rank, block);
+                write_raster_mpi(out_file, runoff, cn_file, rank, block);
+                free_raster(runoff);
+            }
+            free_raster(cn); free_raster(rain);
             MPI_Send(&block, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
         }
     }
