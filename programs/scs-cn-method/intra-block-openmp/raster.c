@@ -56,35 +56,28 @@ Raster *read_raster(const char *filename) {
 }
 
 void write_raster(const char *filename, Raster *rast, const char *ref_file) {
-    GDALAllRegister();
-
-    GDALDatasetH ref_dataset = GDALOpen(ref_file, GA_ReadOnly);
-    if (!ref_dataset) {
-        fprintf(stderr, "Error: Unable to open reference raster %s\n", ref_file);
-        return;
-    }
-
-    double geotransform[6];
-    GDALGetGeoTransform(ref_dataset, geotransform);
-    const char *projection = GDALGetProjectionRef(ref_dataset);
-
-    GDALDatasetH dataset = GDALCreate(GDALGetDriverByName("GTiff"), filename, rast->ncols, rast->nrows, 1, GDT_Float64, NULL);
-    if (!dataset) {
-        fprintf(stderr, "Error: Unable to create raster file %s\n", filename);
-        GDALClose(ref_dataset);
-        return;
-    }
-
-    GDALSetGeoTransform(dataset, geotransform);
-    GDALSetProjection(dataset, projection);
-
-    GDALRasterBandH band = GDALGetRasterBand(dataset, 1);
-    if (GDALRasterIO(band, GF_Write, 0, 0, rast->ncols, rast->nrows, rast->data, rast->ncols, rast->nrows, GDT_Float64, 0, 0) != CE_None) {
-        fprintf(stderr, "Error: Failed to write raster data to %s\n", filename);
-    }
-
-    GDALClose(dataset);
-    GDALClose(ref_dataset);
+    // init and open reference //
+    GDALAllRegister(); GDALDatasetH ref=GDALOpen(ref_file,GA_ReadOnly); if(!ref) {fprintf(stderr,"Error: Unable to open %s\n",ref_file);return;}
+    
+    // get transforms and setup options //
+    double gt[6]; char *opts[]={"COMPRESS=DEFLATE","ZLEVEL=6","TILED=YES","BLOCKXSIZE=256","BLOCKYSIZE=256",NULL};
+    GDALGetGeoTransform(ref,gt); const char *proj=GDALGetProjectionRef(ref);
+    
+    /* create output dataset */
+    GDALDatasetH ds=GDALCreate(GDALGetDriverByName("GTiff"),filename,rast->ncols,rast->nrows,1,GDT_Float32,opts);
+    if(!ds) {fprintf(stderr,"Error: Unable to create %s\n",filename);GDALClose(ref);return;}
+    
+    /* set metadata and allocate float buffer */
+    GDALSetGeoTransform(ds,gt); GDALSetProjection(ds,proj); GDALRasterBandH band=GDALGetRasterBand(ds,1);
+    float *fdata=malloc(rast->nrows*rast->ncols*sizeof(float)); if(!fdata) {GDALClose(ds);GDALClose(ref);return;}
+    
+    // convert to float and write //
+    for(int i=0;i<rast->nrows*rast->ncols;i++) fdata[i]=(float)rast->data[i];
+    GDALSetRasterNoDataValue(band,(float)rast->no_data_value);
+    if(GDALRasterIO(band,GF_Write,0,0,rast->ncols,rast->nrows,fdata,rast->ncols,rast->nrows,GDT_Float32,0,0)!=CE_None)
+        fprintf(stderr,"Error: Failed to write %s\n",filename);
+    
+    free(fdata); GDALClose(ds); GDALClose(ref);
 }
 
 GDALDatasetH open_rainfall_dataset(const char *filename) {
