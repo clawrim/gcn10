@@ -10,48 +10,54 @@ int main(int argc, char *argv[]) {
 
     int num_threads = atoi(argv[4]);
     omp_set_num_threads(num_threads);
+    GDALSetCacheMax(1024 * 1024 * 512); // 512mb cache
 
-    printf("Processing single block\n");
+    printf("Starting SCS runoff calculation with %d threads...\n", num_threads);
 
-    // Open Rainfall raster (large extent)
-    GDALDatasetH rainfall_ds = open_rainfall_dataset(argv[1]);
-    if (!rainfall_ds) {
-        fprintf(stderr, "Error: Unable to open rainfall raster %s\n", argv[1]);
+    Raster *rainfall = read_raster_parallel(argv[1], num_threads);
+    Raster *curve_number = read_raster_parallel(argv[2], num_threads);
+    if (!rainfall || !curve_number) {
+        fprintf(stderr, "Error: Failed to read input rasters (nrows=%d, ncols=%d)\n", 
+                rainfall ? rainfall->nrows : 0, curve_number ? curve_number->nrows : 0);
+        free_raster(rainfall);
+        free_raster(curve_number);
         return EXIT_FAILURE;
     }
 
-    // read CN raster
-    Raster *curve_number = read_raster(argv[2]);
-    if (!curve_number) {
-        fprintf(stderr, "Error reading curve number raster %s\n", argv[2]);
-        GDALClose(rainfall_ds);
-        return EXIT_FAILURE;
-    }
-
-    // get CN geotransform
-    GDALDatasetH cn_ds = GDALOpen(argv[2], GA_ReadOnly);
-    double cn_geotransform[6];
-    GDALGetGeoTransform(cn_ds, cn_geotransform);
-    GDALClose(cn_ds);
-
-    // allocate runoff raster
     Raster *runoff = allocate_raster(curve_number->nrows, curve_number->ncols, curve_number->no_data_value);
+    if (!runoff) {
+        fprintf(stderr, "Error: Failed to allocate runoff raster (nrows=%d, ncols=%d)\n", 
+                curve_number->nrows, curve_number->ncols);
+        free_raster(rainfall);
+        free_raster(curve_number);
+        return EXIT_FAILURE;
+    }
 
-    // compute runoff
-    printf("Computing runoff...\n");
-    calculate_runoff(rainfall_ds, curve_number, runoff, cn_geotransform);
+    printf("Computing runoff for raster (nrows=%d, ncols=%d)...\n", runoff->nrows, runoff->ncols);
+    calculate_runoff(rainfall, curve_number, runoff);
 
-    // write runoff raster
-    printf("Writing runoff raster...\n");
-    write_raster(argv[3], runoff, argv[2]);
+    printf("Converting runoff to Float32 for output...\n");
+    float *runoff_float = malloc(runoff->nrows * runoff->ncols * sizeof(float));
+    if (!runoff_float) {
+        fprintf(stderr, "Error: Failed to allocate Float32 buffer (size=%lu bytes)\n", 
+                runoff->nrows * runoff->ncols * sizeof(float));
+        free_raster(rainfall);
+        free_raster(curve_number);
+        free_raster(runoff);
+        return EXIT_FAILURE;
+    }
+    for (int i = 0; i < runoff->nrows * runoff->ncols; i++) {
+        runoff_float[i] = (float)runoff->data[i];
+    }
 
-    // fee allocated memory
+    printf("Writing runoff raster to %s...\n", argv[3]);
+    write_raster(argv[3], runoff_float, runoff->nrows, runoff->ncols, runoff->no_data_value, argv[2]);
+
+    free_raster(rainfall);
     free_raster(curve_number);
+    free(runoff_float);
     free_raster(runoff);
-    GDALClose(rainfall_ds);
-
-    // print success
-    printf("Single block processing completed successfully.\n");
+    printf("SCS runoff calculation completed successfully (nrows=%d, ncols=%d)\n", 
+           runoff->nrows, runoff->ncols);
     return 0;
 }
-

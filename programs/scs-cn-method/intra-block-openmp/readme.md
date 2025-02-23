@@ -57,4 +57,4 @@ sbopkg -i hwloc
 
 recompiled openmpi and it solved. 
 
-
+ompbak2 works fine. runoff is correct. 

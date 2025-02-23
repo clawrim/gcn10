@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -O3 -fopenmp `gdal-config --cflags`
-LIBS = `gdal-config --libs` -lm
+CFLAGS = -Wall -O3 -fopenmp -march=native -ffast-math `gdal-config --cflags`
+LIBS = `gdal-config --libs` -lm -lpthread
 
 all: scs_runoff
 
@@ -18,4 +18,3 @@ runoff.o: runoff.c global.h
 
 clean:
 	rm -f *.o scs_runoff
-

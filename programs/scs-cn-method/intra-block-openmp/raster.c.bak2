@@ -23,10 +23,11 @@ void *write_raster_chunk(void *args) {
     WriteChunkArgs *wargs = (WriteChunkArgs *)args;
     GDALRasterBandH band = GDALGetRasterBand(wargs->ds, 1);
     int offset = wargs->start_row * wargs->ncols;
+    printf("writing chunk: start_row=%d, num_rows=%d, offset=%d\n", wargs->start_row, wargs->num_rows, offset);
     for (int row = 0; row < wargs->num_rows; row++) {
         float *row_data = wargs->data + (offset + row * wargs->ncols);
         if (GDALRasterIO(band, GF_Write, 0, wargs->start_row + row, wargs->ncols, 1,
-                         row_data, wargs->ncols, 1, GDT_Float32, 0, 0) != CE_None) {
+                         row_data, wargs->ncols, 1, GDT_Float64, 0, 0) != CE_None) { // Changed to GDT_Float64 for testing
             fprintf(stderr, "error: writing chunk at row %d\n", wargs->start_row + row);
         }
     }
@@ -48,6 +49,8 @@ Raster *allocate_raster(int nrows, int ncols, double no_data_value) {
         free(rast);
         return NULL;
     }
+    // debug allocation
+    printf("allocated raster: nrows=%d, ncols=%d, size=%lu bytes\n", nrows, ncols, nrows * ncols * sizeof(double));
     return rast;
 }
 
@@ -80,17 +83,16 @@ Raster *read_raster(const char *filename) {
         GDALClose(ds);
         return NULL;
     }
+    // debug first few values
+    printf("read raster %s: row=0, col=0, R=%.2f; row=0, col=1, R=%.2f; row=1, col=0, R=%.2f\n",
+           filename, rast->data[0], rast->data[1], rast->data[cols]);
     GDALClose(ds);
     return rast;
 }
 
 Raster *read_raster_parallel(const char *filename, int num_threads) {
-    Raster *rast;
-    ReadArgs args = {filename, &rast};
-    pthread_t thread;
-    pthread_create(&thread, NULL, read_raster_thread, &args);
-    pthread_join(thread, NULL);
-    return rast;
+    // force sequential reading for testing
+    return read_raster(filename);
 }
 
 void write_raster(const char *filename, float *data, int nrows, int ncols, double no_data_value, const char *ref_file) {
@@ -104,7 +106,7 @@ void write_raster(const char *filename, float *data, int nrows, int ncols, doubl
     GDALGetGeoTransform(ref, gt);
     const char *proj = GDALGetProjectionRef(ref);
     char *opts[] = {"COMPRESS=DEFLATE", "ZLEVEL=1", "TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", NULL};
-    GDALDatasetH ds = GDALCreate(GDALGetDriverByName("GTiff"), filename, ncols, nrows, 1, GDT_Float32, opts);
+    GDALDatasetH ds = GDALCreate(GDALGetDriverByName("GTiff"), filename, ncols, nrows, 1, GDT_Float64, opts); // Changed to GDT_Float64 for testing
     if (!ds) {
         fprintf(stderr, "error: create %s\n", filename);
         GDALClose(ref);
@@ -115,24 +117,13 @@ void write_raster(const char *filename, float *data, int nrows, int ncols, doubl
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
     GDALSetRasterNoDataValue(band, (float)no_data_value);
 
-    int num_threads = 6; // optimal for your setup
-    int chunk_size = (nrows + num_threads - 1) / num_threads; // ensure exact division
-    pthread_t threads[num_threads];
-    WriteChunkArgs args[num_threads];
-    for (int i = 0; i < num_threads; i++) {
-        args[i].ds = ds;
-        args[i].data = data;
-        args[i].start_row = i * chunk_size;
-        args[i].num_rows = (i == num_threads - 1) ? (nrows - i * chunk_size) : chunk_size;
-        args[i].ncols = ncols;
-        if (args[i].start_row + args[i].num_rows > nrows) {
-            args[i].num_rows = nrows - args[i].start_row;
+    // sequential writing
+    printf("writing sequentially...\n");
+    for (int row = 0; row < nrows; row++) {
+        float *row_data = data + row * ncols;
+        if (GDALRasterIO(band, GF_Write, 0, row, ncols, 1, row_data, ncols, 1, GDT_Float64, 0, 0) != CE_None) { // Changed to GDT_Float64
+            fprintf(stderr, "error: writing row %d\n", row);
         }
-        printf("writing chunk: start_row=%d, num_rows=%d, offset=%d\n", args[i].start_row, args[i].num_rows, args[i].start_row * ncols);
-        pthread_create(&threads[i], NULL, write_raster_chunk, &args[i]);
-    }
-    for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
     }
 
     GDALClose(ds);

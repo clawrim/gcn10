@@ -5,31 +5,9 @@ typedef struct {
     Raster **rast;
 } ReadArgs;
 
-typedef struct {
-    GDALDatasetH ds;
-    float *data;
-    int start_row;
-    int num_rows;
-    int ncols;
-} WriteChunkArgs;
-
 void *read_raster_thread(void *args) {
     ReadArgs *rargs = (ReadArgs *)args;
     *rargs->rast = read_raster(rargs->filename);
-    return NULL;
-}
-
-void *write_raster_chunk(void *args) {
-    WriteChunkArgs *wargs = (WriteChunkArgs *)args;
-    GDALRasterBandH band = GDALGetRasterBand(wargs->ds, 1);
-    int offset = wargs->start_row * wargs->ncols;
-    for (int row = 0; row < wargs->num_rows; row++) {
-        float *row_data = wargs->data + (offset + row * wargs->ncols);
-        if (GDALRasterIO(band, GF_Write, 0, wargs->start_row + row, wargs->ncols, 1,
-                         row_data, wargs->ncols, 1, GDT_Float32, 0, 0) != CE_None) {
-            fprintf(stderr, "error: writing chunk at row %d\n", wargs->start_row + row);
-        }
-    }
     return NULL;
 }
 
@@ -93,7 +71,7 @@ Raster *read_raster_parallel(const char *filename, int num_threads) {
     return rast;
 }
 
-void write_raster(const char *filename, float *data, int nrows, int ncols, double no_data_value, const char *ref_file) {
+void write_raster(const char *filename, Raster *rast, const char *ref_file) {
     GDALAllRegister();
     GDALDatasetH ref = GDALOpen(ref_file, GA_ReadOnly);
     if (!ref) {
@@ -103,8 +81,8 @@ void write_raster(const char *filename, float *data, int nrows, int ncols, doubl
     double gt[6];
     GDALGetGeoTransform(ref, gt);
     const char *proj = GDALGetProjectionRef(ref);
-    char *opts[] = {"COMPRESS=DEFLATE", "ZLEVEL=1", "TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", NULL};
-    GDALDatasetH ds = GDALCreate(GDALGetDriverByName("GTiff"), filename, ncols, nrows, 1, GDT_Float32, opts);
+    char *opts[] = {"COMPRESS=LZW", "TILED=YES", NULL};
+    GDALDatasetH ds = GDALCreate(GDALGetDriverByName("GTiff"), filename, rast->ncols, rast->nrows, 1, GDT_Float32, opts);
     if (!ds) {
         fprintf(stderr, "error: create %s\n", filename);
         GDALClose(ref);
@@ -113,28 +91,20 @@ void write_raster(const char *filename, float *data, int nrows, int ncols, doubl
     GDALSetGeoTransform(ds, gt);
     GDALSetProjection(ds, proj);
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-    GDALSetRasterNoDataValue(band, (float)no_data_value);
-
-    int num_threads = 6; // optimal for your setup
-    int chunk_size = (nrows + num_threads - 1) / num_threads; // ensure exact division
-    pthread_t threads[num_threads];
-    WriteChunkArgs args[num_threads];
-    for (int i = 0; i < num_threads; i++) {
-        args[i].ds = ds;
-        args[i].data = data;
-        args[i].start_row = i * chunk_size;
-        args[i].num_rows = (i == num_threads - 1) ? (nrows - i * chunk_size) : chunk_size;
-        args[i].ncols = ncols;
-        if (args[i].start_row + args[i].num_rows > nrows) {
-            args[i].num_rows = nrows - args[i].start_row;
-        }
-        printf("writing chunk: start_row=%d, num_rows=%d, offset=%d\n", args[i].start_row, args[i].num_rows, args[i].start_row * ncols);
-        pthread_create(&threads[i], NULL, write_raster_chunk, &args[i]);
+    float *fdata = malloc(rast->nrows * rast->ncols * sizeof(float));
+    if (!fdata) {
+        GDALClose(ds);
+        GDALClose(ref);
+        return;
     }
-    for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
+    for (int i = 0; i < rast->nrows * rast->ncols; i++) {
+        fdata[i] = (float)rast->data[i];
     }
-
+    GDALSetRasterNoDataValue(band, (float)rast->no_data_value);
+    if (GDALRasterIO(band, GF_Write, 0, 0, rast->ncols, rast->nrows, fdata, rast->ncols, rast->nrows, GDT_Float32, 0, 0) != CE_None) {
+        fprintf(stderr, "error: write %s\n", filename);
+    }
+    free(fdata);
     GDALClose(ds);
     GDALClose(ref);
 }
