@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Script: parallel_cn.py
 Author: Abdullah Azzam
@@ -32,7 +34,7 @@ This script generates Curve Numbers (CN) in parallel, blockwise, using multiproc
    - The number of processes can be specified via a command-line argument or defaults to the number of available CPU cores.
 
 5. **Output**:
-   - Saves generated CN rasters as GeoTIFF files with LZW compression in separate directories:
+   - Saves generated CN rasters as Cloud Optimized GeoTIFF files with compression in separate directories:
      - `cn_rasters_drained/` for drained conditions.
      - `cn_rasters_undrained/` for undrained conditions.
    - Each output file follows the naming convention: `cn_{hc}_{arc}_{block_id}.tif`.
@@ -53,15 +55,15 @@ Outputs:
   - 9 rasters for undrained conditions.
 
 Usage:
-# Run the script to process all blocks starting from a specific block ID:
+# run the script to process all blocks starting from a specific block ID:
 # (Replace <block_id> with the desired starting block ID)
   python parallel_cn.py --start_block_id <block_id>
 
-# Process specific blocks by providing a file containing block IDs:
+# process specific blocks by providing a file containing block IDs:
 # (Replace <file_path> with the path to your block IDs file)
   python parallel_cn.py --block_ids_file <file_path>
 
-# Specify the number of parallel processes to use:
+# specify the number of parallel processes to use:
 # (Replace <num_processes> with the number of processes you want)
   python parallel_cn.py --processes <num_processes>
 
@@ -75,7 +77,7 @@ import os
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 
-# Paths
+# paths
 HYSOGS_DATA_PATH = "../../hsg/HYSOGs250m.tif"
 ESA_DATA_PATH = "../../landcover/esa_worldcover_2021.vrt"
 LOOKUP_TABLE_PATH = "../../lookups"
@@ -83,18 +85,39 @@ OUTPUT_DIR_DRAINED = "cn_rasters_drained"
 OUTPUT_DIR_UNDRAINED = "cn_rasters_undrained"
 BLOCKS_SHP_PATH = "../../shps/esa_extent_blocks.shp"
 
-# Create output directories if they do not exist
+# create output directories if they do not exist
 os.makedirs(OUTPUT_DIR_DRAINED, exist_ok=True)
 os.makedirs(OUTPUT_DIR_UNDRAINED, exist_ok=True)
 
+#def save_raster(data, transform, crs, output_path):
+#    """Save raster data to a GeoTIFF file using GDAL, treating 255 as the no-data value."""
+#    driver = gdal.GetDriverByName('GTiff')
+#    dst_ds = driver.Create(output_path, data.shape[1], data.shape[0], 1, gdal.GDT_Byte, ['COMPRESS=LZW'])
+#    dst_ds.SetGeoTransform(transform)
+#    dst_ds.SetProjection(crs.ExportToWkt())
+#    dst_ds.GetRasterBand(1).WriteArray(data)
+#    dst_ds.GetRasterBand(1).SetNoDataValue(255)
+#    dst_ds.FlushCache()
+
 def save_raster(data, transform, crs, output_path):
-    """Save raster data to a GeoTIFF file using GDAL, treating 255 as the no-data value."""
+    """Save raster data as a Cloud Optimized GeoTIFF with compression and tiling."""
     driver = gdal.GetDriverByName('GTiff')
-    dst_ds = driver.Create(output_path, data.shape[1], data.shape[0], 1, gdal.GDT_Byte, ['COMPRESS=LZW'])
+    options = [
+        'TILED=YES',                # required for COG
+        'BLOCKXSIZE=512',           # standard tile width
+        'BLOCKYSIZE=512',           # standard tile height
+        'COMPRESS=DEFLATE',         # better than LZW (did some tests)
+        'PREDICTOR=2',              # good for integer data
+        'ZLEVEL=9',                 # maximum compression
+        'COPY_SRC_OVERVIEWS=YES'    # needed for cloud optimization
+    ]
+    dst_ds = driver.Create(output_path, data.shape[1], data.shape[0], 1, gdal.GDT_Byte, options)
     dst_ds.SetGeoTransform(transform)
     dst_ds.SetProjection(crs.ExportToWkt())
-    dst_ds.GetRasterBand(1).WriteArray(data)
-    dst_ds.GetRasterBand(1).SetNoDataValue(255)
+    band = dst_ds.GetRasterBand(1)
+    band.WriteArray(data)
+    band.SetNoDataValue(255)
+    dst_ds.BuildOverviews('NEAREST', [2, 4, 8, 16])  # add overviews (required for COG)
     dst_ds.FlushCache()
 
 def load_raster_data(file_path, bbox):
@@ -105,37 +128,37 @@ def load_raster_data(file_path, bbox):
         print(f"Failed to load raster data from {file_path}")
         return None, None, None
 
-    # Bounding box coordinates
+    # bounding box coordinates
     minx, miny, maxx, maxy = bbox
     
-    # Get raster dimensions and bounds
+    # get raster dimensions and bounds
     raster_x_max = gt[0] + (src_ds.RasterXSize * gt[1])
     raster_y_min = gt[3] + (src_ds.RasterYSize * gt[5])
 
-    # Clip bounding box to raster bounds if necessary
+    # clip bounding box to raster bounds if necessary
     maxx = min(maxx, raster_x_max)
     miny = max(miny, raster_y_min)
 
-    # Calculate pixel offsets for the adjusted bounding box
+    # calculate pixel offsets for the adjusted bounding box
     x_offset = int((minx - gt[0]) / gt[1])
     y_offset = int((maxy - gt[3]) / gt[5])  # y_offset is top-left, so maxy is used
 
-    # Calculate window size (x_size and y_size) based on the adjusted bounding box
+    # calculate window size (x_size and y_size) based on the adjusted bounding box
     x_size = int((maxx - minx) / gt[1])
     y_size = int((maxy - miny) / abs(gt[5]))
 
-    # Check if calculated window size is valid
+    # check if calculated window size is valid
     if x_size <= 0 or y_size <= 0:
         print(f"Invalid window size for {file_path} with bbox {bbox}: x_size={x_size}, y_size={y_size}")
         return None, None, None
 
-    # Ensure that the access window is within raster bounds
+    # ensure that the access window is within raster bounds
     if x_offset + x_size > src_ds.RasterXSize:
         x_size = src_ds.RasterXSize - x_offset
     if y_offset + y_size > src_ds.RasterYSize:
         y_size = src_ds.RasterYSize - y_offset
 
-    # Read the data within the valid window
+    # read the data within the valid window
     data = src_ds.ReadAsArray(x_offset, y_offset, x_size, y_size)
     transform = (minx, gt[1], 0, maxy, 0, gt[5])
     crs = osr.SpatialReference()
@@ -149,21 +172,21 @@ def resample_raster(src_file, target_shape, target_transform):
     src_band = src_ds.GetRasterBand(1)
     src_nodata = src_band.GetNoDataValue()
 
-    # Create an in-memory raster to store the resampled data
+    # create an in-memory raster to store the resampled data
     mem_drv = gdal.GetDriverByName('MEM')
     mem_ds = mem_drv.Create('', target_shape[1], target_shape[0], 1, gdal.GDT_Byte)
     mem_ds.SetGeoTransform(target_transform)
     mem_ds.SetProjection(src_ds.GetProjection())
 
-    # Perform the resampling
+    # perform the resampling
     gdal.ReprojectImage(src_ds, mem_ds, None, None, gdal.GRA_NearestNeighbour)
 
-    # Read the resampled data into a NumPy array
+    # read the resampled data into a NumPy array
     resampled_data = mem_ds.GetRasterBand(1).ReadAsArray()
 
-    # Handle the NoData value (replace with 255 instead of np.nan)
+    # handle the NoData value (replace with 255 instead of np.nan)
     if src_nodata is not None:
-        resampled_data[resampled_data == src_nodata] = 255  # Use 255 or another integer as NoData
+        resampled_data[resampled_data == src_nodata] = 255  # use 255 or another integer as NoData
 
     return resampled_data
 
@@ -174,7 +197,10 @@ def load_lookup_table(hc, arc):
     lookup_table = {}
     for index, row in df.iterrows():
         land_cover = int(row['grid_code'].split('_')[0])
-        soil_group = int(row['grid_code'].split('_')[1])
+        #soil_group = int(row['grid_code'].split('_')[1])
+        soil_group_str = row['grid_code'].split('_')[1]
+        soil_map = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+        soil_group = soil_map.get(soil_group_str.upper(), 4)  # default to D if unknown
         cn_value = int(row['cn'])
         lookup_table[(land_cover, soil_group)] = cn_value
     return lookup_table
@@ -194,7 +220,7 @@ def modify_hysogs_data(hysogs_data, condition):
     return hysogs_data
 
 def calculate_cn(esa_data, hysogs_data, lookup_table):
-    cn_raster = np.full(esa_data.shape, 255, dtype=np.uint8)  # Initialize with no-data value
+    cn_raster = np.full(esa_data.shape, 255, dtype=np.uint8)  # initialize with no-data value
     for (land_cover, soil_group), cn_value in lookup_table.items():
         mask = (esa_data == land_cover) & (hysogs_data == soil_group)
         cn_raster[mask] = cn_value
@@ -204,7 +230,7 @@ def process_block(block):
     block_id, block_geom = block                                                    
     bbox = block_geom.bounds     
                                                           
-    # Define the conditions                                                         
+    # define the conditions                                                         
     conditions = [('p', 'i'), ('p', 'ii'), ('p', 'iii'), ('f', 'i'), ('f', 'ii'), ('f', 'iii'), ('g', 'i'), ('g', 'ii'), ('g', 'iii')]   
                                                                                 
     for condition in ['drained', 'undrained']:                                    
@@ -234,24 +260,24 @@ def process_block(block):
             print(f"Error loading HYSOGS data for block {block_id}: {e}. Skipping block.")
             continue                                                                      
                                                             
-        # Resample HYSOGS data to match ESA data shape and transform
+        # resample HYSOGS data to match ESA data shape and transform
         hysogs_data = resample_raster(HYSOGS_DATA_PATH, esa_data.shape, esa_transform)
 
-        # Handle missing or invalid HYSOGS data
+        # handle missing or invalid HYSOGS data
         missing_hysogs_mask = np.isnan(hysogs_data) | ~(np.isin(hysogs_data, [1, 2, 3, 4]))
         if np.any(missing_hysogs_mask):         
             print(f"Missing or invalid HYSOGS data in block {block_id}. Assigning HSG D to missing pixels.")                       
             hysogs_data[missing_hysogs_mask] = 4                              
                                                 
-        # Skip CN generation if no valid HSG data is present
+        # skip CN generation if no valid HSG data is present
         if not np.any(np.isin(hysogs_data, [1, 2, 3, 4])):                
             print(f"No valid HSG data in block {block_id}. Skipping CN generation.")
             continue
 
-        # Modify HYSOGS data based on condition
+        # modify HYSOGS data based on condition
         modified_hysogs_data = modify_hysogs_data(hysogs_data.copy(), condition)
 
-        # Generate and save CN rasters
+        # generate and save CN rasters
         for hc, arc in conditions:
             lookup_table = load_lookup_table(hc, arc)
             cn_raster = calculate_cn(esa_data, modified_hysogs_data, lookup_table)
@@ -265,7 +291,7 @@ def process_block(block):
 def main(block_ids=None, start_block_id=1, num_processes=None):
     blocks_gdf = gpd.read_file(BLOCKS_SHP_PATH)
     
-    # Filter based on start_block_id and block_ids if provided
+    # filter based on start_block_id and block_ids if provided
     if block_ids is not None:
         blocks_gdf = blocks_gdf[blocks_gdf['ID'].isin(block_ids)]
     else:
@@ -288,12 +314,12 @@ if __name__ == "__main__":
     parser.add_argument('--block_ids_file', type=str, help='Path to a text file containing block IDs to process')
     args = parser.parse_args()
 
-    # Read block IDs from file if provided
+    # read block IDs from file if provided
     block_ids = None
     if args.block_ids_file:
         with open(args.block_ids_file, 'r') as f:
             block_ids = [int(line.strip()) for line in f if line.strip().isdigit()]
     
-    # Pass the list of block IDs to main if provided
+    # pass the list of block IDs to main if provided
     main(block_ids=block_ids, start_block_id=args.start_block_id, num_processes=args.processes)
 
