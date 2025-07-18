@@ -27,6 +27,9 @@ extern char *block_ids_file;
 /* parse key=value config or exit */
 void parse_config(const char *conf_file);
 
+/* free allocated config strings */
+void free_config(void);
+
 /* per-rank log setup/teardown */
 void init_logging(int rank);
 void finalize_logging(void);
@@ -50,6 +53,6 @@ void save_raster(const uint8_t *data,
                  const char *path);
 
 /* core processing */
-void process_block(int block_id);
+void process_block(int block_id, bool overwrite);
 
 #endif /* GLOBAL_H */
