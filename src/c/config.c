@@ -31,7 +31,7 @@ static char *trim_ws(char *s) {
 
 /*
  * Parse key=value config file. Expects lines in the format:
- *   key = value
+ * key = value
  * where key is one of: hysogs_data_path, esa_data_path, blocks_shp_path,
  * lookup_table_path, log_dir. Lines starting with # are ignored.
  * Whitespace around = is allowed. All keys are required.
