@@ -13,8 +13,8 @@ endif
 CFLAGS  = -Wall -Werror -O3 -march=native $(GDAL_CFLAGS)
 LDFLAGS = -O3 -march=native $(GDAL_LIBS) -lm
 
-SRCS    = main.c config.c raster.c cn.c
-OBJS    = main.o config.o raster.o cn.o
+SRCS    = main.c config.c raster.c cn.c log.c
+OBJS    = main.o config.o raster.o cn.o log.o
 TARGET  = gencn$(EXT)
 
 .PHONY: all clean
@@ -28,7 +28,8 @@ $(TARGET): \
 	main.o \
 	config.o \
 	raster.o \
-	cn.o
+	cn.o \
+	log.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o: %.c global.h
