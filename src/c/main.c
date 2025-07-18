@@ -10,13 +10,14 @@ int main(int argc, char **argv)
     char *conf_file = NULL;
     int *block_ids = NULL;
     int n_blocks = 0, i;
+    bool overwrite = false;
 
     /* init mpi */
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    /* parse args: -c config [-l list.txt] */
+    /* parse args: -c config [-l list.txt] [-o] */
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-c") == 0 && i+1 < argc) {
             conf_file = argv[++i];
@@ -24,6 +25,9 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "-l") == 0 && i+1 < argc) {
             use_list_mode = true;
             block_ids_file = argv[++i];
+        }
+        else if (strcmp(argv[i], "-o") == 0) {
+            overwrite = true;
         }
     }
 
@@ -70,7 +74,7 @@ int main(int argc, char **argv)
 
     /* distribute blocks round-robin */
     for (i = rank; i < n_blocks; i += size) {
-        process_block(block_ids[i]);
+        process_block(block_ids[i], overwrite);
     }
 
     /* summary on rank 0 */
@@ -80,7 +84,8 @@ int main(int argc, char **argv)
 
     /* cleanup */
     finalize_logging();
-    MPI_Finalize();
+    free_config();
     free(block_ids);
+    MPI_Finalize();
     return 0;
 }
