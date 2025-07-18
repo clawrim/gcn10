@@ -24,10 +24,20 @@ int *read_block_list(const char *path, int *n_blocks) {
     if (!f) return NULL;
     int cap = 128, cnt = 0;
     int *ids = malloc(cap * sizeof(int));
+    if (!ids) {
+        fprintf(stderr, "malloc failed for block IDs\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
     while (fscanf(f, "%d", &ids[cnt]) == 1) {
         if (++cnt == cap) {
             cap *= 2;
-            ids = realloc(ids, cap * sizeof(int));
+            int *new_ids = realloc(ids, cap * sizeof(int));
+            if (!new_ids) {
+                fprintf(stderr, "realloc failed for block IDs\n");
+                free(ids);
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+            ids = new_ids;
         }
     }
     fclose(f);
@@ -43,6 +53,10 @@ int get_all_blocks(int **out_ids) {
     OGRLayerH layer = OGR_DS_GetLayer(ds, 0);
     int total = OGR_L_GetFeatureCount(layer, TRUE);
     int *ids = malloc(total * sizeof(int));
+    if (!ids) {
+        fprintf(stderr, "malloc failed for shapefile IDs\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
     OGR_L_ResetReading(layer);
     OGRFeatureH feat;
     int i = 0;
@@ -106,12 +120,12 @@ uint8_t *load_raster(const char *path,
     const char *wkt = GDALGetProjectionRef(ds);
     *srs = OSRNewSpatialReference(wkt);
 
-    size_t np = (size_t)xcount * ycount;
-    uint8_t *buf = malloc(np);
+    size_t pixel_count = (size_t)xcount * ycount;
+    uint8_t *buf = malloc(pixel_count);
     if (!buf) {
         fprintf(stderr, "out of memory: %s\n", path);
         GDALClose(ds);
-        return NULL;
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     CPLErr err = GDALRasterIO(
