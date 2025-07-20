@@ -8,6 +8,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#else
+#include <sys/stat.h>
+#endif
+
 static FILE *log_fp = NULL;
 static int current_rank = 0;
 
@@ -15,7 +22,11 @@ void init_logging(int rank) {
     current_rank = rank;
 
     /* create logs directory */
+#ifdef _WIN32
+    if (_mkdir(log_dir) != 0 && errno != EEXIST) {
+#else
     if (mkdir(log_dir, 0755) != 0 && errno != EEXIST) {
+#endif
         fprintf(stderr, "failed to create log directory %s\n", log_dir);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }

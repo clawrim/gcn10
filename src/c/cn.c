@@ -10,6 +10,13 @@
 #include <ogr_srs_api.h>
 #include <gdal.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#else
+#include <sys/stat.h>
+#endif
+
 /* load lookup table from CSV file, default 255 for nodata */
 static void load_lookup_table(const char *hc,
                               const char *arc,
@@ -99,8 +106,8 @@ static void calculate_cn(const uint8_t *esa,
 {
     /* combine ESA land cover and HYSOGs soil group to assign CN values */
     for (int i = 0; i < npix; i++) {
-        int land_cover = esa[i];  /* eSA land cover class */
-        int soil_group = hsg[i];  /* hYSOGs soil group */
+        int land_cover = esa[i];  /* ESA land cover class */
+        int soil_group = hsg[i];  /* HYSOGs soil group */
         if (land_cover >= 0 && land_cover < 256 && soil_group >= 0 && soil_group < 5) {
             int cn_value = table[land_cover][soil_group];  /* lookup CN value */
             if (cn_value < 255) out[i] = (uint8_t)cn_value;  /* set valid CN, else keep nodata (255) */
@@ -200,7 +207,16 @@ void process_block(int block_id, bool overwrite)
             free(hysogs_resampled);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
-        mkdir(outdir, 0755);
+#ifdef _WIN32
+        if (_mkdir(outdir) != 0 && errno != EEXIST) {
+#else
+        if (mkdir(outdir, 0755) != 0 && errno != EEXIST) {
+#endif
+            fprintf(stderr, "failed to create output directory %s\n", outdir);
+            free(esa);
+            free(hysogs_resampled);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
 
         for (int hi = 0; hi < 3; hi++) {
             for (int ai = 0; ai < 3; ai++) {
