@@ -10,13 +10,6 @@
 #include <ogr_srs_api.h>
 #include <gdal.h>
 
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(path, mode) _mkdir(path)
-#else
-#include <sys/stat.h>
-#endif
-
 /* load lookup table from CSV file, default 255 for nodata */
 static void load_lookup_table(const char *hc,
                               const char *arc,

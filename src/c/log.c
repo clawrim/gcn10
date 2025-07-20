@@ -6,13 +6,19 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #ifdef _WIN32
 #include <direct.h>
+#include <io.h>
 #define mkdir(path, mode) _mkdir(path)
+#ifndef PATH_MAX
+#define PATH_MAX 260
+#endif
 #else
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <limits.h>
 #endif
 
 static FILE *log_fp = NULL;
@@ -58,7 +64,7 @@ void init_logging(int rank) {
 
     int fd;
     if ((fd = open(outpath, O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-        dup2(fd, STDOUT_FILENO);
+        dup2(fd, FILENO_STDOUT); /* windows required this syntax */
         close(fd);
     } else {
         fprintf(stderr, "failed to open stdout file %s\n", outpath);
@@ -66,7 +72,7 @@ void init_logging(int rank) {
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     if ((fd = open(errpath, O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-        dup2(fd, STDERR_FILENO);
+        dup2(fd, FILENO_STDERR); /* win required this syntax */
         close(fd);
     } else {
         fprintf(stderr, "failed to open stderr file %s\n", errpath);

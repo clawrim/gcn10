@@ -1,6 +1,28 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+/* OS portability macros and includes
+ * required for cross platform compilation */
+
+#ifdef _WIN32
+  #include <direct.h>
+  #include <io.h>
+  #include <fcntl.h>
+  #define mkdir(path, mode) _mkdir(path)
+  #ifndef PATH_MAX
+    #define PATH_MAX 260
+  #endif
+  #define FILENO_STDOUT _fileno(stdout)
+  #define FILENO_STDERR _fileno(stderr)
+#else
+  #include <unistd.h>
+  #include <sys/stat.h>
+  #include <fcntl.h>
+  #include <limits.h>
+  #define FILENO_STDOUT STDOUT_FILENO
+  #define FILENO_STDERR STDERR_FILENO
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <mpi.h>

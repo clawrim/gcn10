@@ -6,7 +6,6 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 /* configured paths (from config.txt) */
 char *hysogs_data_path   = NULL;
