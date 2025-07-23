@@ -52,4 +52,8 @@ void save_raster(const uint8_t *data,
 /* core processing */
 void process_block(int block_id);
 
+/* logging */
+void init_logging(int rank);
+void finalize_logging(void);
+
 #endif /* GLOBAL_H */

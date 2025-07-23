@@ -1,6 +1,5 @@
-hysogs_data_path=/home/abdazzam/hdd/cn/repo/gcn10/hsg/HYSOGs250m_4326_lzw.tif
-esa_data_path=/home/abdazzam/hdd/cn/repo/gcn10/landcover/esa_worldcover_2021.vrt
-blocks_shp_path=/home/abdazzam/hdd/cn/repo/gcn10/shps/esa_extent_blocks.shp
-lookup_table_path=/home/abdazzam/hdd/cn/repo/gcn10/lookups
-log_dir=/home/abdazzam/hdd/cn/repo/gcn10/scripts/parallel-cn-processing/c/hybrid/logs
-
+hysogs_data_path=../../../hsg/HYSOGs250m_4326_lzw.tif
+esa_data_path=../../../landcover/esa_worldcover_2021.vrt
+blocks_shp_path=../../../shps/esa_extent_blocks.shp
+lookup_table_path=../../../lookups
+log_dir=logs/

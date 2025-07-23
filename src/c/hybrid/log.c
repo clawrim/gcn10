@@ -1,5 +1,6 @@
 /* logging functions */
 #include "global.h"
+#include <limits.h> /* for cmake PATH_MAX issue */
 
 static FILE *log_fp = NULL;
 
@@ -8,10 +9,10 @@ void init_logging(int rank) {
     mkdir("logs", 0755);
 
     /* open log file for rank */
-    char log_file[MAX_PATH];
+    char log_file[PATH_MAX]; /*MAX_PATH to PATH_MAX*/
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
-    snprintf(log_file, MAX_PATH, "logs/parallel_cn_%04d%02d%02d_%02d%02d_rank%d.log",
+    snprintf(log_file, PATH_MAX, "logs/parallel_cn_%04d%02d%02d_%02d%02d_rank%d.log",
              tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, rank);
     log_fp = fopen(log_file, "w");
     if (!log_fp) {
@@ -31,6 +32,11 @@ void log_message(const char *level, const char *message) {
     /* write log */
     fprintf(log_fp, "[%s] [Rank %d] [%s] %s\n", timestamp, 0, level, message);
     fflush(log_fp);
+}
+
+void finalize_logging(void) {
+    fflush(stdout);
+    fflush(stderr);
 }
 
 void close_logging(void) {

@@ -74,30 +74,3 @@ void parse_config(const char *conf_file) {
     }
 }
 
-/* redirect stdout/stderr into per-rank files under log_dir */
-void init_logging(int rank) {
-    mkdir(log_dir, 0755);
-    char outpath[PATH_MAX], errpath[PATH_MAX];
-    snprintf(outpath, sizeof(outpath),
-             "%s/rank_%d.out", log_dir, rank);
-    snprintf(errpath, sizeof(errpath),
-             "%s/rank_%d.err", log_dir, rank);
-
-    int fd;
-    if ((fd = open(outpath,
-                   O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-        dup2(fd, STDOUT_FILENO);
-        close(fd);
-    }
-    if ((fd = open(errpath,
-                   O_CREAT|O_WRONLY|O_TRUNC, 0644)) >= 0) {
-        dup2(fd, STDERR_FILENO);
-        close(fd);
-    }
-}
-
-/* flush any pending log output */
-void finalize_logging(void) {
-    fflush(stdout);
-    fflush(stderr);
-}
