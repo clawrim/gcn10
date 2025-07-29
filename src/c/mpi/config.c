@@ -106,7 +106,6 @@ void free_config(void) {
     free(blocks_shp_path);
     free(lookup_table_path);
     free(log_dir);
-    free(block_ids_file);
     hysogs_data_path = NULL;
     esa_data_path = NULL;
     blocks_shp_path = NULL;
