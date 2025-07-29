@@ -54,6 +54,7 @@ void free_config(void);
 
 /* per-rank log setup/teardown */
 void init_logging(int rank);
+void log_message(const char *level, const char *message, bool print_to_screen);
 void finalize_logging(void);
 
 /* block-id sources */
@@ -75,6 +76,7 @@ void save_raster(const uint8_t *data,
                  const char *path);
 
 /* core processing */
-void process_block(int block_id, bool overwrite);
+void process_block(int block_id, bool overwrite, int total_blocks);
+void report_block_completion(int block_id, int total_blocks);
 
 #endif /* GLOBAL_H */

@@ -1,3 +1,8 @@
+/* Implements process_block(), which
+ * applies the Curve Number method to
+ * each block's HSG and landcover data
+ * and writes out the resulting CN raster */
+
 #include "global.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,12 +23,16 @@ static void load_lookup_table(const char *hc,
     char fname[PATH_MAX];
     if (snprintf(fname, sizeof(fname), "%s/default_lookup_%s_%s.csv",
                  lookup_table_path, hc, arc) >= PATH_MAX) {
-        fprintf(stderr, "lookup table path too long\n");
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Lookup table path too long: %s", fname);
+        log_message("ERROR", msg, true);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     FILE *f = fopen(fname, "r");
     if (!f) {
-        fprintf(stderr, "cannot open lookup %s\n", fname);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Cannot open lookup table %s", fname);
+        log_message("ERROR", msg, true);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -35,7 +44,9 @@ static void load_lookup_table(const char *hc,
     /* skip header line */
     char line[128];
     if (!fgets(line, sizeof(line), f)) {
-        fprintf(stderr, "empty lookup table %s\n", fname);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Empty lookup table %s", fname);
+        log_message("ERROR", msg, true);
         fclose(f);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -47,7 +58,9 @@ static void load_lookup_table(const char *hc,
         char *grid_code = tok;
         char *us = strchr(grid_code, '_');
         if (!us) {
-            fprintf(stderr, "invalid grid_code in %s: %s\n", fname, grid_code);
+            char msg[8192];
+            snprintf(msg, sizeof(msg), "Invalid grid_code in %s: %s", fname, grid_code);
+            log_message("ERROR", msg, true);
             continue;
         }
         *us = '\0';  /* split grid_code into lc and sgc */
@@ -58,20 +71,25 @@ static void load_lookup_table(const char *hc,
                   sgc == 'C' ? 3 : 4);
         tok = strtok(NULL, ",");
         if (!tok) {
-            fprintf(stderr, "invalid row in %s: missing cn\n", fname);
+            char msg[8192];
+            snprintf(msg, sizeof(msg), "Invalid row in %s: missing cn", fname);
+            log_message("ERROR", msg, true);
             continue;
         }
         int cnv = atoi(tok);
         if (lc >= 0 && lc < 256 && sg >= 0 && sg < 5) {
             table[lc][sg] = cnv;
         } else {
-            fprintf(stderr, "invalid values in %s: lc=%d, sg=%d\n", fname, lc, sg);
+            char msg[8192];
+            snprintf(msg, sizeof(msg), "Invalid values in %s: lc=%d, sg=%d", fname, lc, sg);
+            log_message("ERROR", msg, true);
         }
     }
     fclose(f);
 }
 
-/* adjust HYSOGs codes based on drained or undrained condition */
+/* Handle dual HSG's, adjust HYSOGs codes
+ * based on drained or undrained condition */
 static void modify_hysogs_data(uint8_t *h,
                                int npix,
                                const char *cond)
@@ -90,14 +108,16 @@ static void modify_hysogs_data(uint8_t *h,
     }
 }
 
-/* generate CN raster by applying lookup table to ESA and HYSOGs data */
+/* generate CN raster by applying
+ * lookup table to ESA and HYSOGs data */
 static void calculate_cn(const uint8_t *esa,
                          const uint8_t *hsg,
                          int npix,
                          int table[256][5],
                          uint8_t *out)
 {
-    /* combine ESA land cover and HYSOGs soil group to assign CN values */
+    /* combine ESA land cover and HYSOGs
+     * soil group to assign CN values */
     for (int i = 0; i < npix; i++) {
         int land_cover = esa[i];  /* ESA land cover class */
         int soil_group = hsg[i];  /* HYSOGs soil group */
@@ -108,7 +128,7 @@ static void calculate_cn(const uint8_t *esa,
     }
 }
 
-void process_block(int block_id, bool overwrite)
+void process_block(int block_id, bool overwrite, int total_blocks)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -116,20 +136,26 @@ void process_block(int block_id, bool overwrite)
     /* fetch block geometry from shapefile */
     OGRDataSourceH ds = OGROpen(blocks_shp_path, FALSE, NULL);
     if (!ds) {
-        fprintf(stderr, "ogr open failed: %s\n", blocks_shp_path);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "OGR open failed: %s", blocks_shp_path);
+        log_message("ERROR", msg, true);
         return;
     }
     OGRLayerH layer = OGR_DS_GetLayer(ds, 0);
     char filter[64];
     if (snprintf(filter, sizeof(filter), "\"ID\"=%d", block_id) >= sizeof(filter)) {
-        fprintf(stderr, "filter string too long for block %d\n", block_id);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Filter string too long for block %d", block_id);
+        log_message("ERROR", msg, true);
         OGR_DS_Destroy(ds);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     OGR_L_SetAttributeFilter(layer, filter);
     OGRFeatureH feat = OGR_L_GetNextFeature(layer);
     if (!feat) {
-        fprintf(stderr, "block %d not found\n", block_id);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Block %d not found", block_id);
+        log_message("ERROR", msg, true);
         OGR_DS_Destroy(ds);
         return;
     }
@@ -146,7 +172,9 @@ void process_block(int block_id, bool overwrite)
     uint8_t *esa = load_raster(esa_data_path, bbox,
                                &xsize, &ysize, gt, &srs);
     if (!esa) {
-        fprintf(stderr, "esa load fail %d\n", block_id);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "ESA load failed for block %d", block_id);
+        log_message("ERROR", msg, true);
         return;
     }
 
@@ -157,17 +185,22 @@ void process_block(int block_id, bool overwrite)
     uint8_t *hysogs_coarse = load_raster(hysogs_data_path, bbox,
                                          &hsx, &hsy, soil_gt, &soil_srs);
     if (!hysogs_coarse) {
-        fprintf(stderr, "hsg load fail %d\n", block_id);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "HYSOGs load failed for block %d", block_id);
+        log_message("ERROR", msg, true);
         free(esa);
         return;
     }
 
-    /* upsample HYSOGs to match ESA grid using nearest-neighbor interpolation */
+    /* upsample HYSOGs to match ESA grid
+     * using nearest-neighbor interpolation */
     int esax = xsize, esay = ysize;
     int npix = esax * esay;
     uint8_t *hysogs_resampled = malloc((size_t)npix);
     if (!hysogs_resampled) {
-        fprintf(stderr, "malloc hsg fail %d\n", block_id);
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Malloc failed for HYSOGs resampling, block %d", block_id);
+        log_message("ERROR", msg, true);
         free(esa);
         free(hysogs_coarse);
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -187,7 +220,8 @@ void process_block(int block_id, bool overwrite)
     }
     free(hysogs_coarse);
 
-    /* generate CN rasters for all combinations of conditions, hc, and arc */
+    /* generate CN rasters for all combinations of 
+     * drainage conditions, hcs, and arcs */
     const char *conds[2] = {"drained","undrained"};
     const char *hcs[3]   = {"p","f","g"};
     const char *arcs[3]  = {"i","ii","iii"};
@@ -195,7 +229,9 @@ void process_block(int block_id, bool overwrite)
     for (int c = 0; c < 2; c++) {
         char outdir[PATH_MAX];
         if (snprintf(outdir, PATH_MAX, "cn_rasters_%s", conds[c]) >= PATH_MAX) {
-            fprintf(stderr, "output directory path too long for %s\n", conds[c]);
+            char msg[8192];
+            snprintf(msg, sizeof(msg), "Output directory path too long for %s", conds[c]);
+            log_message("ERROR", msg, true);
             free(esa);
             free(hysogs_resampled);
             MPI_Abort(MPI_COMM_WORLD, 1);
@@ -205,7 +241,9 @@ void process_block(int block_id, bool overwrite)
 #else
         if (mkdir(outdir, 0755) != 0 && errno != EEXIST) {
 #endif
-            fprintf(stderr, "failed to create output directory %s\n", outdir);
+            char msg[8192];
+            snprintf(msg, sizeof(msg), "Failed to create output directory %s", outdir);
+            log_message("ERROR", msg, true);
             free(esa);
             free(hysogs_resampled);
             MPI_Abort(MPI_COMM_WORLD, 1);
@@ -220,7 +258,9 @@ void process_block(int block_id, bool overwrite)
                 /* adjust HYSOGs data for drained/undrained condition */
                 uint8_t *hysogs_adjusted = malloc((size_t)npix);
                 if (!hysogs_adjusted) {
-                    fprintf(stderr, "malloc hysogs_adjusted fail %d\n", block_id);
+                    char msg[8192];
+                    snprintf(msg, sizeof(msg), "Malloc failed for HYSOGs adjusted, block %d", block_id);
+                    log_message("ERROR", msg, true);
                     free(esa);
                     free(hysogs_resampled);
                     MPI_Abort(MPI_COMM_WORLD, 1);
@@ -231,7 +271,9 @@ void process_block(int block_id, bool overwrite)
                 /* generate CN raster */
                 uint8_t *cn = malloc((size_t)npix);
                 if (!cn) {
-                    fprintf(stderr, "malloc cn fail %d\n", block_id);
+                    char msg[8192];
+                    snprintf(msg, sizeof(msg), "Malloc failed for CN raster, block %d", block_id);
+                    log_message("ERROR", msg, true);
                     free(esa);
                     free(hysogs_resampled);
                     free(hysogs_adjusted);
@@ -240,11 +282,14 @@ void process_block(int block_id, bool overwrite)
                 memset(cn, 255, npix);
                 calculate_cn(esa, hysogs_adjusted, npix, table, cn);
 
-                /* construct output path, appending underscore if file exists and not overwriting */
+                /* construct output path, appending underscore
+		 * if file exists and not overwriting */
                 size_t len = strlen(outdir) + strlen(hcs[hi]) + strlen(arcs[ai]) + 32;
                 char *outpath = malloc(len);
                 if (!outpath) {
-                    fprintf(stderr, "malloc outpath fail %d\n", block_id);
+                    char msg[8192];
+                    snprintf(msg, sizeof(msg), "Malloc failed for output path, block %d", block_id);
+                    log_message("ERROR", msg, true);
                     free(esa);
                     free(hysogs_resampled);
                     free(hysogs_adjusted);
@@ -252,7 +297,9 @@ void process_block(int block_id, bool overwrite)
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
                 if (snprintf(outpath, len, "%s/cn_%s_%s_%d.tif", outdir, hcs[hi], arcs[ai], block_id) >= len) {
-                    fprintf(stderr, "output path too long for block %d\n", block_id);
+                    char msg[8192];
+                    snprintf(msg, sizeof(msg), "Output path too long for block %d", block_id);
+                    log_message("ERROR", msg, true);
                     free(esa);
                     free(hysogs_resampled);
                     free(hysogs_adjusted);
@@ -266,7 +313,9 @@ void process_block(int block_id, bool overwrite)
                         fclose(f);
                         char *newpath = malloc(len + 1);
                         if (!newpath) {
-                            fprintf(stderr, "malloc newpath fail %d\n", block_id);
+                            char msg[8192];
+                            snprintf(msg, sizeof(msg), "Malloc failed for new output path, block %d", block_id);
+                            log_message("ERROR", msg, true);
                             free(esa);
                             free(hysogs_resampled);
                             free(hysogs_adjusted);
@@ -275,7 +324,9 @@ void process_block(int block_id, bool overwrite)
                             MPI_Abort(MPI_COMM_WORLD, 1);
                         }
                         if (snprintf(newpath, len + 1, "%s/cn_%s_%s_%d_.tif", outdir, hcs[hi], arcs[ai], block_id) >= len + 1) {
-                            fprintf(stderr, "new output path too long for block %d\n", block_id);
+                            char msg[8192];
+                            snprintf(msg, sizeof(msg), "New output path too long for block %d", block_id);
+                            log_message("ERROR", msg, true);
                             free(esa);
                             free(hysogs_resampled);
                             free(hysogs_adjusted);
@@ -292,6 +343,13 @@ void process_block(int block_id, bool overwrite)
                 /* save CN raster as GeoTIFF */
                 save_raster(cn, esax, esay, gt, srs, outpath);
 
+                /* log completion and notify
+		 * rank 0 for progress tracking */
+                char msg[8192];
+                snprintf(msg, sizeof(msg), "Completed block %d for %s/%s/%s", block_id, conds[c], hcs[hi], arcs[ai]);
+                log_message("INFO", msg, false); /* log to file only */
+                report_block_completion(block_id, total_blocks); /* notify rank 0 */
+
                 free(outpath);
                 free(cn);
                 free(hysogs_adjusted);
@@ -301,8 +359,25 @@ void process_block(int block_id, bool overwrite)
 
     free(esa);
     free(hysogs_resampled);
+}
 
-    if (rank == 0) {
-        printf("finished block %d\n", block_id);
+/* report block completion to
+ * rank 0 for progress tracking */
+void report_block_completion(int block_id, int total_blocks)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    /* send completion signal to rank 0 */
+    if (rank != 0) {
+        int signal = block_id;
+        MPI_Send(&signal, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    } else {
+        /* rank 0 tracks progress */
+        static int blocks_completed = 0;
+        blocks_completed++;
+        char msg[8192];
+        snprintf(msg, sizeof(msg), "Progress: %d/%d blocks completed", blocks_completed / 6, total_blocks);
+        log_message("INFO", msg, true); /* print to screen and log */
     }
 }

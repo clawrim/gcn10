@@ -1,3 +1,7 @@
+/* Reads, parses, and validates all required settings
+ * (input rasters, shapefiles, lookup tables, log and
+ * output paths) from the user’s config file. */
+
 #include "global.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,3 +1,7 @@
+/* Spatial I/O; contains helpers for reading/writing/clipping
+ * rasters and vectors (shp), and for converting those
+ * extents into in‑memory arrays for processing. */
+
 #include "global.h"
 #include "gdal.h"
 #include "cpl_conv.h"
@@ -21,11 +25,18 @@ static void register_drivers(void) {
 int *read_block_list(const char *path, int *n_blocks) {
     register_drivers();
     FILE *f = fopen(path, "r");
-    if (!f) return NULL;
+    if (!f) {
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Cannot open block list file %s", path);
+        log_message("ERROR", msg, true);
+        return NULL;
+    }
     int cap = 128, cnt = 0;
     int *ids = malloc(cap * sizeof(int));
     if (!ids) {
-        fprintf(stderr, "malloc failed for block IDs\n");
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Malloc failed for block IDs");
+        log_message("ERROR", msg, true);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     while (fscanf(f, "%d", &ids[cnt]) == 1) {
@@ -33,7 +44,9 @@ int *read_block_list(const char *path, int *n_blocks) {
             cap *= 2;
             int *new_ids = realloc(ids, cap * sizeof(int));
             if (!new_ids) {
-                fprintf(stderr, "realloc failed for block IDs\n");
+                char msg[512];
+                snprintf(msg, sizeof(msg), "Realloc failed for block IDs");
+                log_message("ERROR", msg, true);
                 free(ids);
                 MPI_Abort(MPI_COMM_WORLD, 1);
             }
@@ -49,12 +62,19 @@ int *read_block_list(const char *path, int *n_blocks) {
 int get_all_blocks(int **out_ids) {
     register_drivers();
     OGRDataSourceH ds = OGROpen(blocks_shp_path, FALSE, NULL);
-    if (!ds) return -1;
+    if (!ds) {
+        char msg[512];
+        snprintf(msg, sizeof(msg), "OGR open failed: %s", blocks_shp_path);
+        log_message("ERROR", msg, true);
+        return -1;
+    }
     OGRLayerH layer = OGR_DS_GetLayer(ds, 0);
     int total = OGR_L_GetFeatureCount(layer, TRUE);
     int *ids = malloc(total * sizeof(int));
     if (!ids) {
-        fprintf(stderr, "malloc failed for shapefile IDs\n");
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Malloc failed for shapefile IDs");
+        log_message("ERROR", msg, true);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     OGR_L_ResetReading(layer);
@@ -79,7 +99,9 @@ uint8_t *load_raster(const char *path,
     register_drivers();
     GDALDatasetH ds = GDALOpen(path, GA_ReadOnly);
     if (!ds) {
-        fprintf(stderr, "gdal open failed: %s\n", path);
+        char msg[512];
+        snprintf(msg, sizeof(msg), "GDAL open failed: %s", path);
+        log_message("ERROR", msg, true);
         return NULL;
     }
 
@@ -98,6 +120,9 @@ uint8_t *load_raster(const char *path,
     if (xoff < 0)       { xcount += xoff; xoff = 0; }
     if (yoff < 0)       { ycount += yoff; yoff = 0; }
     if (xoff >= rx || yoff >= ry || xcount <= 0 || ycount <= 0) {
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Invalid raster bounds for %s", path);
+        log_message("ERROR", msg, true);
         GDALClose(ds);
         return NULL;
     }
@@ -123,7 +148,9 @@ uint8_t *load_raster(const char *path,
     size_t pixel_count = (size_t)xcount * ycount;
     uint8_t *buf = malloc(pixel_count);
     if (!buf) {
-        fprintf(stderr, "out of memory: %s\n", path);
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Out of memory for raster %s", path);
+        log_message("ERROR", msg, true);
         GDALClose(ds);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -137,7 +164,9 @@ uint8_t *load_raster(const char *path,
     );
     GDALClose(ds);
     if (err != CE_None) {
-        fprintf(stderr, "GDALRasterIO error %d on %s\n", err, path);
+        char msg[512];
+        snprintf(msg, sizeof(msg), "GDALRasterIO error %d on %s", err, path);
+        log_message("ERROR", msg, true);
         free(buf);
         return NULL;
     }
@@ -176,7 +205,9 @@ void save_raster(const uint8_t *data,
         GDT_Byte, 0, 0
     );
     if (err != CE_None) {
-        fprintf(stderr, "write error %d on %s\n", err, path);
+        char msg[512];
+        snprintf(msg, sizeof(msg), "Write error %d on %s", err, path);
+        log_message("ERROR", msg, true);
     }
 
     GDALClose(ds);
