@@ -1,41 +1,37 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-/* OS portability macros and includes
- * required for cross platform compilation */
-
-#ifdef _WIN32
-  #include <direct.h>
-  #include <io.h>
-  #include <fcntl.h>
-  #define mkdir(path, mode) _mkdir(path)
-  #ifndef PATH_MAX
-    #define PATH_MAX 260
-  #endif
-  #define FILENO_STDOUT _fileno(stdout)
-  #define FILENO_STDERR _fileno(stderr)
-#else
-  #include <unistd.h>
-  #include <sys/stat.h>
-  #include <fcntl.h>
-  #include <limits.h>
-  #define FILENO_STDOUT STDOUT_FILENO
-  #define FILENO_STDERR STDERR_FILENO
-#endif
-
+/* os portability macros and includes for cross-platform compilation */
 #include <stdbool.h>
 #include <stdint.h>
 #include <mpi.h>
+#include <gdal.h>
+#include <gdal_alg.h>
+#include <cpl_conv.h>
+#include <cpl_string.h>
+#include <ogr_api.h>
+#include <ogr_srs_api.h>
 
-/* gdal c api */
-#include "gdal.h"
-#include "gdal_alg.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#include <fcntl.h>
+#define mkdir(path, mode) _mkdir(path)
+#ifndef PATH_MAX
+#define PATH_MAX 260
+#endif
+#define FILENO_STDOUT _fileno(stdout)
+#define FILENO_STDERR _fileno(stderr)
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <limits.h>
+#define FILENO_STDOUT STDOUT_FILENO
+#define FILENO_STDERR STDERR_FILENO
+#endif
 
-/* configured paths (from config.txt) */
+/* configured paths from config file */
 extern char *hysogs_data_path;
 extern char *esa_data_path;
 extern char *blocks_shp_path;
@@ -46,37 +42,17 @@ extern char *log_dir;
 extern bool use_list_mode;
 extern char *block_ids_file;
 
-/* parse key=value config or exit */
-void parse_config(const char *conf_file);
-
-/* free allocated config strings */
+/* function prototypes */
+void parse_config(const char *);
 void free_config(void);
-
-/* per-rank log setup/teardown */
-void init_logging(int rank);
-void log_message(const char *level, const char *message, bool print_to_screen);
+void init_logging(int);
+void log_message(const char *, const char *, bool);
 void finalize_logging(void);
-
-/* block-id sources */
-int *read_block_list(const char *path, int *n_blocks);
-int get_all_blocks(int **out_ids);
-
-/* raster I/O */
-uint8_t *load_raster(const char *path,
-                     const double *bbox,
-                     int *xsize,
-                     int *ysize,
-                     double *gt,
-                     OGRSpatialReferenceH *srs);
-void save_raster(const uint8_t *data,
-                 int xsize,
-                 int ysize,
-                 const double *gt,
-                 OGRSpatialReferenceH srs,
-                 const char *path);
-
-/* core processing */
-void process_block(int block_id, bool overwrite, int total_blocks);
-void report_block_completion(int block_id, int total_blocks);
+int *read_block_list(const char *, int *);
+int get_all_blocks(int **);
+uint8_t *load_raster(const char *, const double *, int *, int *, double *, OGRSpatialReferenceH *);
+void save_raster(const uint8_t *, int, int, const double *, OGRSpatialReferenceH, const char *);
+void process_block(int, bool, int);
+void report_block_completion(int, int);
 
 #endif /* GLOBAL_H */

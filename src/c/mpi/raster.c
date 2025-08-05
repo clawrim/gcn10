@@ -1,51 +1,58 @@
-/* Spatial I/O; contains helpers for reading/writing/clipping
- * rasters and vectors (shp), and for converting those
- * extents into in‑memory arrays for processing. */
+/* spatial i/o functions for reading/writing/clipping rasters and vectors */
 
-#include "global.h"
-#include "gdal.h"
-#include "cpl_conv.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
+#include "global.h"
 
-/* register gdal/ogr drivers once */
-static void register_drivers(void) {
-    static bool done = false;
-    if (done) return;
+static bool drivers_registered = false;
+
+/* register gdal/ogr drivers */
+static void
+register_drivers(void)
+{
+    if (drivers_registered) {
+        return;
+    }
     GDALAllRegister();
     OGRRegisterAll();
-    done = true;
+    drivers_registered = true;
 }
 
-/* read integer IDs from text file */
-int *read_block_list(const char *path, int *n_blocks) {
+/* read integer ids from text file */
+int *
+read_block_list(const char *path, int *n_blocks)
+{
+    FILE *f;
+    int *ids, cap, cnt;
+    char msg[512];
+
     register_drivers();
-    FILE *f = fopen(path, "r");
+    f = fopen(path, "r");
     if (!f) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Cannot open block list file %s", path);
+        snprintf(msg, sizeof(msg), "cannot open block list file %s", path);
         log_message("ERROR", msg, true);
         return NULL;
     }
-    int cap = 128, cnt = 0;
-    int *ids = malloc(cap * sizeof(int));
+
+    cap = 128;
+    cnt = 0;
+    ids = malloc(cap * sizeof(int));
     if (!ids) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Malloc failed for block IDs");
+        snprintf(msg, sizeof(msg), "malloc failed for block ids");
         log_message("ERROR", msg, true);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
+
     while (fscanf(f, "%d", &ids[cnt]) == 1) {
-        if (++cnt == cap) {
+        cnt++;
+        if (cnt == cap) {
+            int *new_ids;
             cap *= 2;
-            int *new_ids = realloc(ids, cap * sizeof(int));
+            new_ids = realloc(ids, cap * sizeof(int));
             if (!new_ids) {
-                char msg[512];
-                snprintf(msg, sizeof(msg), "Realloc failed for block IDs");
+                snprintf(msg, sizeof(msg), "realloc failed for block ids");
                 log_message("ERROR", msg, true);
                 free(ids);
                 MPI_Abort(MPI_COMM_WORLD, 1);
@@ -58,31 +65,38 @@ int *read_block_list(const char *path, int *n_blocks) {
     return ids;
 }
 
-/* read all IDs from shapefile attribute "ID" */
-int get_all_blocks(int **out_ids) {
+/* read all ids from shapefile attribute "id" */
+int
+get_all_blocks(int **out_ids)
+{
+    OGRDataSourceH ds;
+    OGRLayerH layer;
+    OGRFeatureH feat;
+    int *ids, total, i;
+    char msg[512];
+
     register_drivers();
-    OGRDataSourceH ds = OGROpen(blocks_shp_path, FALSE, NULL);
+    ds = OGROpen(blocks_shp_path, FALSE, NULL);
     if (!ds) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "OGR open failed: %s", blocks_shp_path);
+        snprintf(msg, sizeof(msg), "ogr open failed: %s", blocks_shp_path);
         log_message("ERROR", msg, true);
         return -1;
     }
-    OGRLayerH layer = OGR_DS_GetLayer(ds, 0);
-    int total = OGR_L_GetFeatureCount(layer, TRUE);
-    int *ids = malloc(total * sizeof(int));
+
+    layer = OGR_DS_GetLayer(ds, 0);
+    total = OGR_L_GetFeatureCount(layer, TRUE);
+    ids = malloc(total * sizeof(int));
     if (!ids) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Malloc failed for shapefile IDs");
+        snprintf(msg, sizeof(msg), "malloc failed for shapefile ids");
         log_message("ERROR", msg, true);
+        OGR_DS_Destroy(ds);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
+
     OGR_L_ResetReading(layer);
-    OGRFeatureH feat;
-    int i = 0;
+    i = 0;
     while ((feat = OGR_L_GetNextFeature(layer))) {
-        ids[i++] = OGR_F_GetFieldAsInteger(
-            feat, OGR_F_GetFieldIndex(feat, "ID"));
+        ids[i++] = OGR_F_GetFieldAsInteger(feat, OGR_F_GetFieldIndex(feat, "ID"));
         OGR_F_Destroy(feat);
     }
     OGR_DS_Destroy(ds);
@@ -90,50 +104,58 @@ int get_all_blocks(int **out_ids) {
     return i;
 }
 
-/* load and clip a window from 'path' into a byte buffer */
-uint8_t *load_raster(const char *path,
-                     const double *bbox,
-                     int *xsize, int *ysize,
-                     double *gt,
-                     OGRSpatialReferenceH *srs) {
+/* load and clip raster window into byte buffer */
+uint8_t *
+load_raster(const char *path, const double *bbox, int *xsize, int *ysize, double *gt, OGRSpatialReferenceH *srs)
+{
+    GDALDatasetH ds;
+    double t[6];
+    int xoff, yoff, xcount, ycount, rx, ry;
+    uint8_t *buf;
+    size_t pixel_count;
+    const char *wkt;
+    CPLErr err;
+    char msg[512];
+
     register_drivers();
-    GDALDatasetH ds = GDALOpen(path, GA_ReadOnly);
+    ds = GDALOpen(path, GA_ReadOnly);
     if (!ds) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "GDAL open failed: %s", path);
+        snprintf(msg, sizeof(msg), "gdal open failed: %s", path);
         log_message("ERROR", msg, true);
         return NULL;
     }
 
-    double t[6];
     GDALGetGeoTransform(ds, t);
+    xoff = (int)floor((bbox[0] - t[0]) / t[1]);
+    yoff = (int)floor((bbox[3] - t[3]) / t[5]);
+    xcount = (int)ceil((bbox[2] - bbox[0]) / t[1]);
+    ycount = (int)ceil((bbox[1] - bbox[3]) / t[5]);
 
-    /* raw pixel offsets & size for bbox */
-    int xoff   = (int)floor((bbox[0] - t[0]) / t[1]);
-    int yoff   = (int)floor((bbox[3] - t[3]) / t[5]);
-    int xcount = (int)ceil ((bbox[2] - bbox[0]) / t[1]);
-    int ycount = (int)ceil ((bbox[1] - bbox[3]) / t[5]);
-
-    /* clamp to dataset bounds */
-    int rx = GDALGetRasterXSize(ds);
-    int ry = GDALGetRasterYSize(ds);
-    if (xoff < 0)       { xcount += xoff; xoff = 0; }
-    if (yoff < 0)       { ycount += yoff; yoff = 0; }
+    rx = GDALGetRasterXSize(ds);
+    ry = GDALGetRasterYSize(ds);
+    if (xoff < 0) {
+        xcount += xoff;
+        xoff = 0;
+    }
+    if (yoff < 0) {
+        ycount += yoff;
+        yoff = 0;
+    }
     if (xoff >= rx || yoff >= ry || xcount <= 0 || ycount <= 0) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Invalid raster bounds for %s", path);
+        snprintf(msg, sizeof(msg), "invalid raster bounds for %s", path);
         log_message("ERROR", msg, true);
         GDALClose(ds);
         return NULL;
     }
-    if (xoff + xcount > rx) xcount = rx - xoff;
-    if (yoff + ycount > ry) ycount = ry - yoff;
+    if (xoff + xcount > rx) {
+        xcount = rx - xoff;
+    }
+    if (yoff + ycount > ry) {
+        ycount = ry - yoff;
+    }
 
-    /* output sizes */
     *xsize = xcount;
     *ysize = ycount;
-
-    /* clipped geotransform */
     gt[0] = t[0] + xoff * t[1];
     gt[1] = t[1];
     gt[2] = t[2];
@@ -141,31 +163,24 @@ uint8_t *load_raster(const char *path,
     gt[4] = t[4];
     gt[5] = t[5];
 
-    /* spatial reference */
-    const char *wkt = GDALGetProjectionRef(ds);
+    wkt = GDALGetProjectionRef(ds);
     *srs = OSRNewSpatialReference(wkt);
 
-    size_t pixel_count = (size_t)xcount * ycount;
-    uint8_t *buf = malloc(pixel_count);
+    pixel_count = (size_t)xcount * ycount;
+    buf = malloc(pixel_count);
     if (!buf) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Out of memory for raster %s", path);
+        snprintf(msg, sizeof(msg), "out of memory for raster %s", path);
         log_message("ERROR", msg, true);
         GDALClose(ds);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    CPLErr err = GDALRasterIO(
-        GDALGetRasterBand(ds,1),
-        GF_Read,
-        xoff, yoff, xcount, ycount,
-        buf, xcount, ycount,
-        GDT_Byte, 0, 0
-    );
+    err = GDALRasterIO(GDALGetRasterBand(ds, 1), GF_Read,
+                       xoff, yoff, xcount, ycount,
+                       buf, xcount, ycount, GDT_Byte, 0, 0);
     GDALClose(ds);
     if (err != CE_None) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "GDALRasterIO error %d on %s", err, path);
+        snprintf(msg, sizeof(msg), "gdalrasterio error %d on %s", err, path);
         log_message("ERROR", msg, true);
         free(buf);
         return NULL;
@@ -174,39 +189,36 @@ uint8_t *load_raster(const char *path,
     return buf;
 }
 
-/* save buffer as deflate-tiled GeoTIFF */
-void save_raster(const uint8_t *data,
-                 int xsize,
-                 int ysize,
-                 const double *gt,
-                 OGRSpatialReferenceH srs,
-                 const char *path)
+/* save buffer as deflate-tiled geotiff */
+void
+save_raster(const uint8_t *data, int xsize, int ysize, const double *gt, OGRSpatialReferenceH srs, const char *path)
 {
-    register_drivers();
-    GDALDriverH drv = GDALGetDriverByName("GTiff");
-    char **opts = NULL;
-    opts = CSLSetNameValue(opts, "COMPRESS", "DEFLATE");
-    opts = CSLSetNameValue(opts, "TILED",    "YES");
+    GDALDriverH drv;
+    GDALDatasetH ds;
+    char **opts;
+    char *wkt;
+    CPLErr err;
+    char msg[512];
 
-    GDALDatasetH ds = GDALCreate(
-        drv, path, xsize, ysize, 1, GDT_Byte, opts);
+    register_drivers();
+    drv = GDALGetDriverByName("GTiff");
+    opts = NULL;
+    opts = CSLSetNameValue(opts, "COMPRESS", "DEFLATE");
+    opts = CSLSetNameValue(opts, "TILED", "YES");
+
+    ds = GDALCreate(drv, path, xsize, ysize, 1, GDT_Byte, opts);
     GDALSetGeoTransform(ds, (double *)gt);
 
-    char *wkt = NULL;
+    wkt = NULL;
     OSRExportToWkt(srs, &wkt);
     GDALSetProjection(ds, wkt);
     CPLFree(wkt);
 
-    CPLErr err = GDALRasterIO(
-        GDALGetRasterBand(ds,1),
-        GF_Write,
-        0, 0, xsize, ysize,
-        (void *)data, xsize, ysize,
-        GDT_Byte, 0, 0
-    );
+    err = GDALRasterIO(GDALGetRasterBand(ds, 1), GF_Write,
+                       0, 0, xsize, ysize,
+                       (void *)data, xsize, ysize, GDT_Byte, 0, 0);
     if (err != CE_None) {
-        char msg[512];
-        snprintf(msg, sizeof(msg), "Write error %d on %s", err, path);
+        snprintf(msg, sizeof(msg), "write error %d on %s", err, path);
         log_message("ERROR", msg, true);
     }
 

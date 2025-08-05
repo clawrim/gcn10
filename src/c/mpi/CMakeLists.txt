@@ -27,28 +27,28 @@ set(SOURCES
 )
 
 # define executable
-add_executable(gencn ${SOURCES})
+add_executable(gcn10 ${SOURCES})
 
 # link libraries (add math library for non-MSVC compilers)
-target_link_libraries(gencn PRIVATE ${MPI_C_LIBRARIES} ${GDAL_LIBRARIES})
+target_link_libraries(gcn10 PRIVATE ${MPI_C_LIBRARIES} ${GDAL_LIBRARIES})
 if(NOT CMAKE_C_COMPILER_ID MATCHES "MSVC")
-    target_link_libraries(gencn PRIVATE m)
+    target_link_libraries(gcn10 PRIVATE m)
 endif()
 
 # set compiler flags for MSVC and others
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(gencn PRIVATE /W4 /O2 /D_CRT_SECURE_NO_WARNINGS)
+    target_compile_options(gcn10 PRIVATE /W4 /O2 /D_CRT_SECURE_NO_WARNINGS)
 else()
-    target_compile_options(gencn PRIVATE -Wall -Werror -O3 -march=native)
+    target_compile_options(gcn10 PRIVATE -Wall -Werror -O3 -march=native)
 endif()
 
 # set output executable extension for Windows
 if(WIN32)
-    set_target_properties(gencn PROPERTIES SUFFIX ".exe")
+    set_target_properties(gcn10 PROPERTIES SUFFIX ".exe")
 endif()
 
 # install target
-install(TARGETS gencn DESTINATION bin)
+install(TARGETS gcn10 DESTINATION bin)
 
 # enable testing
 enable_testing()
