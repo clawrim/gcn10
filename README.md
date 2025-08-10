@@ -1,4 +1,4 @@
-# GCN10: Global Curve Number Dataset
+# GCN10: Global Curve Number 10m
 
 GCN10 is a high-resolution, open-source global Curve Number (CN) dataset generator.
 It combines ESA WorldCover land cover data and HYSOGs250m soil data to create CN rasters
@@ -53,7 +53,6 @@ Make sure the following directories contain the required input files:
 - **CMake**: Required for building the project (version 3.12+).
 - **C Compiler**: gcc (linux) or MSVC (Visual Studio 2022 on windows).
 
----
 
 ### 3.2. Linux
 
@@ -75,8 +74,6 @@ Ensure development packages for GDAL, MPI (e.g., MPICH/OpenMPI), and OpenMP are 
 - Download: https://visualstudio.microsoft.com/vs/
 - Install the **"Desktop development with C++"** workload.
 - Ensure `cmake`, `cl.exe`, and `ninja` are included in the environment.
-
----
 
 #### (b) Microsoft MPI
 
@@ -103,8 +100,6 @@ After installation:
 C:\Program Files\Microsoft MPI\Bin
 ```
 
----
-
 #### (c) GDAL via OSGeo4W
 
 - Download the OSGeo4W installer: https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
@@ -124,12 +119,8 @@ After installation:
 C:\OSGeo4W\bin
 ```
 
----
-
 #### (d) **Install CMake**
  Download from [CMake](https://cmake.org/download/) and install
-
----
 
 #### 3.3.2 Compilation
 
@@ -141,8 +132,6 @@ Either open **x64 Native Tools Command Prompt for VS 2022**, or run manually:
 "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvars64.bat"
 ```
 
----
-
 #### Step 2: Create Build Directory
 
 Replace USERNAME with your user.
@@ -152,8 +141,6 @@ cd C:\USERNAME\gcn10\c
 mkdir build
 cd build
 ```
-
----
 
 #### Step 3: Configure with CMake
 
@@ -166,8 +153,6 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
 
 > Use ^ for line continuation in CMD.
 
----
-
 #### Step 4: Build the Executable
 
 ```cmd
@@ -179,8 +164,6 @@ Output will be located at:
 ```
 build\Release\gcn10.exe
 ```
-
----
 
 #### Step 5: Copy Executable to Source Directory
 
@@ -220,7 +203,7 @@ mpiexec -n 4 ./gcn10 -c config.txt -o
 
 ### 4.2. Windows
 
-From the c\ directory:
+From the mpi\ directory:
 ```cmd
 :: serial
 gcn10.exe -c config.txt
