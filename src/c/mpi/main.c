@@ -107,6 +107,9 @@ int main(int argc, char *argv[])
         /* setup progress tracking on rank 0 */
         for (r = 1; r < size; r++) {
             for (i = r; i < n_blocks; i += size) {
+		/* TODO: this statement is blocking and rank 0 becomes idles
+		 * until all other ranks return; suggest using
+		 * MPI_Irecv/MPI_Isend/MPI_Test* for asynchronous logging */
                 MPI_Recv(&signal, 1, MPI_INT, r, 0,
                          MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 report_block_completion(signal, n_blocks);
