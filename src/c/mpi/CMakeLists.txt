@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(GenCN C)
+project(GCN10)
 
 # set C standard to C99
 set(CMAKE_C_STANDARD 99)

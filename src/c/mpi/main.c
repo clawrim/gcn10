@@ -6,135 +6,140 @@
 #include <stdlib.h>
 #include "global.h"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    int rank, size, n_blocks, i;
-    char *conf_file;
-    int *block_ids;
-    bool overwrite;
+	int rank, size, n_blocks, i;
+	char *conf_file;
+	int *block_ids;
+	bool overwrite;
 
-    /* initialize variables */
-    rank = 0;
-    size = 0;
-    n_blocks = 0;
-    conf_file = NULL;
-    block_ids = NULL;
-    overwrite = false;
+	/* initialize variables */
+	rank = 0;
+	size = 0;
+	n_blocks = 0;
+	conf_file = NULL;
+	block_ids = NULL;
+	overwrite = false;
 
-    /* initialize mpi */
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+	/* initialize mpi */
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    /* parse command-line arguments */
-    for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
-            conf_file = argv[++i];
-        } else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) {
-            use_list_mode = true;
-            block_ids_file = argv[++i];
-        } else if (strcmp(argv[i], "-o") == 0) {
-            overwrite = true;
-        }
-    }
+	/* parse command-line arguments */
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
+			conf_file = argv[++i];
+		} else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) {
+			use_list_mode = true;
+			block_ids_file = argv[++i];
+		} else if (strcmp(argv[i], "-o") == 0) {
+			overwrite = true;
+		}
+	}
 
-    /* validate config file */
-    if (!conf_file) {
-        if (rank == 0) {
-            fprintf(stderr, "[rank 0] missing -c config.txt\n");
-        }
-        MPI_Abort(MPI_COMM_WORLD, 1);
-    }
+	/* validate config file */
+	if (!conf_file) {
+		if (rank == 0) {
+			fprintf(stderr, "[rank 0] missing -c config.txt\n");
+		}
+		MPI_Abort(MPI_COMM_WORLD, 1);
+	}
 
-    /* read and print config */
-    parse_config(conf_file);
-    if (rank == 0) {
-        char msg[8192];
-        snprintf(msg, sizeof(msg),
-                 "starting processing with %d mpi ranks\n"
-                 "check rank_0.log in the log directory for detailed progress\n"
-                 "config loaded:\n"
-                 "  hysogs_data_path   = %s\n"
-                 "  esa_data_path      = %s\n"
-                 "  blocks_shp_path    = %s\n"
-                 "  lookup_table_path  = %s\n"
-                 "  log_dir            = %s",
-                 size, hysogs_data_path, esa_data_path,
-                 blocks_shp_path, lookup_table_path, log_dir);
-        log_message("INFO", msg, true);
-    }
+	/* read and print config */
+	parse_config(conf_file);
+	if (rank == 0) {
+		char msg[8192];
+		snprintf(msg, sizeof(msg),
+			 "starting processing with %d mpi ranks\n"
+			 "check rank_0.log in the log directory for detailed progress\n"
+			 "config loaded:\n"
+			 "  hysogs_data_path   = %s\n"
+			 "  esa_data_path      = %s\n"
+			 "  blocks_shp_path    = %s\n"
+			 "  lookup_table_path  = %s\n"
+			 "  log_dir            = %s",
+			 size, hysogs_data_path, esa_data_path,
+			 blocks_shp_path, lookup_table_path, log_dir);
+		log_message("INFO", msg, true);
+	}
 
-    /* setup per-rank logging */
-    init_logging(rank);
+	/* setup per-rank logging */
+	init_logging(rank);
 
-    /* load block ids */
-    if (use_list_mode) {
-        block_ids = read_block_list(block_ids_file, &n_blocks);
-        if (!block_ids || n_blocks == 0) {
-            char msg[8192];
-            snprintf(msg, sizeof(msg), "no ids found in %s", block_ids_file);
-            log_message("ERROR", msg, true);
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-    } else {
-        n_blocks = get_all_blocks(&block_ids);
-        if (n_blocks < 0) {
-            char msg[8192];
-            snprintf(msg, sizeof(msg), "failed to read shapefile %s", blocks_shp_path);
-            log_message("ERROR", msg, true);
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-        if (n_blocks == 0) {
-            char msg[8192];
-            snprintf(msg, sizeof(msg), "no blocks found in %s", blocks_shp_path);
-            log_message("ERROR", msg, true);
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-    }
+	/* load block ids */
+	if (use_list_mode) {
+		block_ids = read_block_list(block_ids_file, &n_blocks);
+		if (!block_ids || n_blocks == 0) {
+			char msg[8192];
+			snprintf(msg, sizeof(msg), "no ids found in %s",
+				 block_ids_file);
+			log_message("ERROR", msg, true);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+		}
+	} else {
+		n_blocks = get_all_blocks(&block_ids);
+		if (n_blocks < 0) {
+			char msg[8192];
+			snprintf(msg, sizeof(msg),
+				 "failed to read shapefile %s",
+				 blocks_shp_path);
+			log_message("ERROR", msg, true);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+		}
+		if (n_blocks == 0) {
+			char msg[8192];
+			snprintf(msg, sizeof(msg), "no blocks found in %s",
+				 blocks_shp_path);
+			log_message("ERROR", msg, true);
+			MPI_Abort(MPI_COMM_WORLD, 1);
+		}
+	}
 
-    /* print total blocks and mode */
-    if (rank == 0) {
-        char msg[8192];
-        snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
-                 use_list_mode ? "from list file" : "from shapefile");
-        log_message("INFO", msg, true);
-    }
+	/* print total blocks and mode */
+	if (rank == 0) {
+		char msg[8192];
+		snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
+			 use_list_mode ? "from list file" : "from shapefile");
+		log_message("INFO", msg, true);
+	}
 
-    /* setup progress tracking on rank 0 */
-    if (rank == 0) {
-        int r, signal;
-        for (r = 1; r < size; r++) {
-            for (i = r; i < n_blocks; i += size) {
-                MPI_Recv(&signal, 1, MPI_INT, r, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                report_block_completion(signal, n_blocks);
-            }
-        }
-    }
+	/* setup progress tracking on rank 0 */
+	if (rank == 0) {
+		int r, signal;
+		for (r = 1; r < size; r++) {
+			for (i = r; i < n_blocks; i += size) {
+				MPI_Recv(&signal, 1, MPI_INT, r, 0,
+					 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				report_block_completion(signal, n_blocks);
+			}
+		}
+	}
 
-    /* distribute blocks round-robin */
-    for (i = rank; i < n_blocks; i += size) {
-        char msg[8192];
-        snprintf(msg, sizeof(msg), "processing block %d", block_ids[i]);
-        log_message("INFO", msg, true);
-        process_block(block_ids[i], overwrite, n_blocks);
-    }
+	/* distribute blocks round-robin */
+	for (i = rank; i < n_blocks; i += size) {
+		char msg[8192];
+		snprintf(msg, sizeof(msg), "processing block %d", block_ids[i]);
+		log_message("INFO", msg, true);
+		process_block(block_ids[i], overwrite, n_blocks);
+	}
 
-    /* synchronize all ranks */
-    MPI_Barrier(MPI_COMM_WORLD);
+	/* synchronize all ranks */
+	MPI_Barrier(MPI_COMM_WORLD);
 
-    /* print summary on rank 0 */
-    if (rank == 0) {
-        char msg[8192];
-        snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks", n_blocks, size);
-        log_message("INFO", msg, true);
-    }
+	/* print summary on rank 0 */
+	if (rank == 0) {
+		char msg[8192];
+		snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks",
+			 n_blocks, size);
+		log_message("INFO", msg, true);
+	}
 
-    /* cleanup */
-    finalize_logging();
-    free_config();
-    free(block_ids);
-    MPI_Finalize();
+	/* cleanup */
+	finalize_logging();
+	free_config();
+	free(block_ids);
+	MPI_Finalize();
 
-    return 0;
+	return 0;
 }
