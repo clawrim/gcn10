@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 	char *conf_file;
 	int *block_ids;
 	bool overwrite;
+	char msg[8192];
 
 	/* initialize variables */
 	rank = 0;
@@ -49,7 +50,6 @@ int main(int argc, char *argv[])
 	/* read and print config */
 	parse_config(conf_file);
 	if (rank == 0) {
-		char msg[8192];
 		snprintf(msg, sizeof(msg),
 			 "starting processing with %d mpi ranks\n"
 			 "check rank_0.log in the log directory for detailed progress\n"
@@ -70,35 +70,33 @@ int main(int argc, char *argv[])
 	/* load block ids */
 	if (use_list_mode) {
 		block_ids = read_block_list(block_ids_file, &n_blocks);
-		if (!block_ids || n_blocks == 0) {
-			char msg[8192];
+		if (rank == 0 && (!block_ids || !n_blocks)) {
 			snprintf(msg, sizeof(msg), "no ids found in %s",
 				 block_ids_file);
 			log_message("ERROR", msg, true);
-			MPI_Abort(MPI_COMM_WORLD, 1);
 		}
 	} else {
-		n_blocks = get_all_blocks(&block_ids);
-		if (n_blocks < 0) {
-			char msg[8192];
-			snprintf(msg, sizeof(msg),
-				 "failed to read shapefile %s",
-				 blocks_shp_path);
-			log_message("ERROR", msg, true);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-		}
-		if (n_blocks == 0) {
-			char msg[8192];
-			snprintf(msg, sizeof(msg), "no blocks found in %s",
-				 blocks_shp_path);
-			log_message("ERROR", msg, true);
-			MPI_Abort(MPI_COMM_WORLD, 1);
+		block_ids = get_all_blocks(&n_blocks);
+		if (rank == 0 && (!block_ids || !n_blocks)) {
+		    if (!block_ids) {
+			    snprintf(msg, sizeof(msg),
+				     "failed to read shapefile %s",
+				     blocks_shp_path);
+			    log_message("ERROR", msg, true);
+		    }
+		    if (!n_blocks) {
+			    snprintf(msg, sizeof(msg), "no blocks found in %s",
+				     blocks_shp_path);
+			    log_message("ERROR", msg, true);
+		    }
 		}
 	}
 
+	if (!block_ids || !n_blocks)
+	    MPI_Abort(MPI_COMM_WORLD, 1);
+
 	/* print total blocks and mode */
 	if (rank == 0) {
-		char msg[8192];
 		snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
 			 use_list_mode ? "from list file" : "from shapefile");
 		log_message("INFO", msg, true);
@@ -118,7 +116,6 @@ int main(int argc, char *argv[])
 
 	/* distribute blocks round-robin */
 	for (i = rank; i < n_blocks; i += size) {
-		char msg[8192];
 		snprintf(msg, sizeof(msg), "processing block %d", block_ids[i]);
 		log_message("INFO", msg, true);
 		process_block(block_ids[i], overwrite, n_blocks);
@@ -129,7 +126,6 @@ int main(int argc, char *argv[])
 
 	/* print summary on rank 0 */
 	if (rank == 0) {
-		char msg[8192];
 		snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks",
 			 n_blocks, size);
 		log_message("INFO", msg, true);
@@ -141,5 +137,5 @@ int main(int argc, char *argv[])
 	free(block_ids);
 	MPI_Finalize();
 
-	return 0;
+	exit(EXIT_SUCCESS);
 }
