@@ -96,17 +96,15 @@ int main(int argc, char *argv[])
     if (!block_ids || !n_blocks)
         MPI_Abort(MPI_COMM_WORLD, 1);
 
-    /* print total blocks and mode */
-    if (rank == 0) {
-        snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
-                 use_list_mode ? "from list file" : "from shapefile");
-        log_message("INFO", msg, true);
-    }
-
-    /* setup progress tracking on rank 0 */
     if (rank == 0) {
         int r, signal;
 
+        /* print total blocks and mode */
+        snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
+                 use_list_mode ? "from list file" : "from shapefile");
+        log_message("INFO", msg, true);
+
+        /* setup progress tracking on rank 0 */
         for (r = 1; r < size; r++) {
             for (i = r; i < n_blocks; i += size) {
                 MPI_Recv(&signal, 1, MPI_INT, r, 0,
