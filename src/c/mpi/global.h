@@ -49,7 +49,7 @@ void init_logging(int);
 void log_message(const char *, const char *, bool);
 void finalize_logging(void);
 int *read_block_list(const char *, int *);
-int get_all_blocks(int **);
+int *get_all_blocks(int *);
 uint8_t *load_raster(const char *, const double *, int *, int *, double *,
 		     OGRSpatialReferenceH *);
 void save_raster(const uint8_t *, int, int, const double *,

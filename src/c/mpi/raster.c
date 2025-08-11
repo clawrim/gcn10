@@ -66,12 +66,12 @@ int *read_block_list(const char *path, int *n_blocks)
 }
 
 /* read all ids from shapefile attribute "id" */
-int get_all_blocks(int **out_ids)
+int *get_all_blocks(int *n_blocks)
 {
 	OGRDataSourceH ds;
 	OGRLayerH layer;
 	OGRFeatureH feat;
-	int *ids, total, i;
+	int *ids, total;
 	char msg[512];
 
 	register_drivers();
@@ -80,7 +80,7 @@ int get_all_blocks(int **out_ids)
 		snprintf(msg, sizeof(msg), "ogr open failed: %s",
 			 blocks_shp_path);
 		log_message("ERROR", msg, true);
-		return -1;
+		return NULL;
 	}
 
 	layer = OGR_DS_GetLayer(ds, 0);
@@ -94,16 +94,15 @@ int get_all_blocks(int **out_ids)
 	}
 
 	OGR_L_ResetReading(layer);
-	i = 0;
+	*n_blocks = 0;
 	while ((feat = OGR_L_GetNextFeature(layer))) {
-		ids[i++] =
+		ids[*n_blocks++] =
 		    OGR_F_GetFieldAsInteger(feat,
 					    OGR_F_GetFieldIndex(feat, "ID"));
 		OGR_F_Destroy(feat);
 	}
 	OGR_DS_Destroy(ds);
-	*out_ids = ids;
-	return i;
+	return ids;
 }
 
 /* load and clip raster window into byte buffer */
