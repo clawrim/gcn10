@@ -51,10 +51,10 @@ void finalize_logging(void);
 int *read_block_list(const char *, int *);
 int *get_all_blocks(int *);
 uint8_t *load_raster(const char *, const double *, int *, int *, double *,
-		     OGRSpatialReferenceH *);
+                     OGRSpatialReferenceH *);
 void save_raster(const uint8_t *, int, int, const double *,
-		 OGRSpatialReferenceH, const char *);
+                 OGRSpatialReferenceH, const char *);
 void process_block(int, bool, int);
 void report_block_completion(int, int);
 
-#endif				/* GLOBAL_H */
+#endif /* GLOBAL_H */
