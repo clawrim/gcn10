@@ -363,9 +363,12 @@ void process_block(int block_id, bool overwrite, int total_blocks)
 
                 /* log completion */
                 snprintf(msg, sizeof(msg),
-                         "completed block %d for %s/%s/%s",
+                         "completed condition for %d: %s/%s/%s",
                          block_id, conds[c], hcs[hi], arcs[ai]);
                 log_message("INFO", msg, false);
+		
+		/* report tha 1/18 condition for
+		 * this block has completed */ 
                 report_block_completion(block_id, total_blocks);
 
                 free(outpath);
@@ -379,6 +382,7 @@ void process_block(int block_id, bool overwrite, int total_blocks)
     free(hysogs_resampled);
 }
 
+#if 0
 /* report block completion to rank 0 */
 void report_block_completion(int block_id, int total_blocks)
 {
@@ -399,3 +403,4 @@ void report_block_completion(int block_id, int total_blocks)
         log_message("INFO", msg, true);
     }
 }
+#endif

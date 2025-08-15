@@ -57,4 +57,16 @@ void save_raster(const uint8_t *, int, int, const double *,
 void process_block(int, bool, int);
 void report_block_completion(int, int);
 
+/* additional for async logging */
+/* async progress api: rank 0 works + polls; workers fire-and-forget sends */
+void progress_init(int rank, int size, int n_blocks);
+void progress_poll(int rank, int n_blocks);
+void progress_finalize(int rank);
+
+/* workers call this from cn.c; rank 0 logs locally (no self-send) */
+void report_block_completion(int block_id, int total_blocks);
+
+/* local sink used only by rank 0; split it so it doesn't recurse via mpi */
+void report_block_completion_local(int block_id, int total_blocks);
+
 #endif /* GLOBAL_H */

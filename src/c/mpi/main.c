@@ -76,61 +76,57 @@ int main(int argc, char *argv[])
             snprintf(msg, sizeof(msg), "no ids found in %s", block_ids_file);
             log_message("ERROR", msg, true);
         }
-    }
-    else {
+    } else {
         block_ids = get_all_blocks(&n_blocks);
         if (rank == 0 && (!block_ids || !n_blocks)) {
             if (!block_ids) {
-                snprintf(msg, sizeof(msg),
-                         "failed to read shapefile %s", blocks_shp_path);
+                snprintf(msg, sizeof(msg), "failed to read shapefile %s", blocks_shp_path);
                 log_message("ERROR", msg, true);
             }
             if (!n_blocks) {
-                snprintf(msg, sizeof(msg), "no blocks found in %s",
-                         blocks_shp_path);
+                snprintf(msg, sizeof(msg), "no blocks found in %s", blocks_shp_path);
                 log_message("ERROR", msg, true);
             }
         }
     }
 
+    /* validate and abort if nothing to do */
     if (!block_ids || !n_blocks)
         MPI_Abort(MPI_COMM_WORLD, 1);
 
-    if (rank == 0) {
-        int r, signal;
+    /* init async progress so rank 0 can
+     * both work and poll without blocking */
+    progress_init(rank, size, n_blocks);
 
+    if (rank == 0) {
         /* print total blocks and mode */
         snprintf(msg, sizeof(msg), "processing %d blocks %s", n_blocks,
                  use_list_mode ? "from list file" : "from shapefile");
         log_message("INFO", msg, true);
-
-        /* setup progress tracking on rank 0 */
-        for (r = 1; r < size; r++) {
-            for (i = r; i < n_blocks; i += size) {
-		/* TODO: this statement is blocking and rank 0 becomes idles
-		 * until all other ranks return; suggest using
-		 * MPI_Irecv/MPI_Isend/MPI_Test* for asynchronous logging */
-                MPI_Recv(&signal, 1, MPI_INT, r, 0,
-                         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                report_block_completion(signal, n_blocks);
-            }
-        }
     }
 
     /* distribute blocks round-robin */
     for (i = rank; i < n_blocks; i += size) {
         snprintf(msg, sizeof(msg), "processing block %d", block_ids[i]);
         log_message("INFO", msg, true);
+
         process_block(block_ids[i], overwrite, n_blocks);
+
+        /* rank 0 polls here to drain 
+	 * progress without blocking */
+        progress_poll(rank, n_blocks);
     }
+
+    /* after finishing local work, rank 0 
+     * drains remaining worker signals */
+    progress_finalize(rank);
 
     /* synchronize all ranks */
     MPI_Barrier(MPI_COMM_WORLD);
 
     /* print summary on rank 0 */
     if (rank == 0) {
-        snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks",
-                 n_blocks, size);
+        snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks", n_blocks, size);
         log_message("INFO", msg, true);
     }
 
