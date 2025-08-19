@@ -230,9 +230,9 @@ specifications in Table \@ref{tab:hardware}.
 
 The Python `multiprocessing.Pool` implementation with 16 workers,
 required 21,207 seconds (~5 hours 54 minutes) to process the 32-blocks
-test set. This confirmed that Python overheads in memory handling and
+test set. This experiment confirmed that Python overheads in memory handling and
 process management make it unsuitable for global-scale CN
-mapping. Assuming ideal speedup, running same tests as the C implementations
+mapping. Assuming ideal speedup, running the same tests as the C implementations
 would have taken ~230 days.
 
 ## C MPI/OpenMP
@@ -241,7 +241,7 @@ The hybrid MPI/OpenMP implementation was tested by varying both the
 number of MPI ranks (N) and OpenMP threads (T). Increasing the number 
 of threads within a rank did not reduce runtime significantly 
 (\autoref{fig:hybrid}). Speedup scaled primarily with the number
-of MPI ranks, while threading overhead and GDAL’s lack of thread-safe raster
+of MPI ranks, while threading overhead and GDAL's lack of thread-safe raster
 writing limited the benefits of OpenMP parallelism. Allocating cores to
 OpenMP threads effectively reduced the number of available MPI ranks,
 underutilizing hardware that could otherwise process additional blocks in
@@ -252,10 +252,9 @@ ranks.](fig1-omp.jpg){#fig:hybrid width="100%"}
 
 ## C MPI
 
-
 The standalone MPI implementation achieved strong scaling across ranks,
 with computation times decreasing from ~7,800 seconds at 1 rank to
-~845 seconds at 16 ranks (\autoref{fig:mpi-time}). This confirms that the
+~845 seconds at 16 ranks (\autoref{fig:mpi-time}). This performance confirms that the
 implementation can process increasingly large workloads in shorter wall
 times as ranks increase.
 
@@ -275,7 +274,7 @@ and efficiency.
 
 The strong scaling behavior in terms of runtime is observed. Each doubling
 of ranks yielded substantial reductions in wall time, with diminishing 
-returns at higher counts due to parallel overhead (\autoref{fig:mpi-time}).
+returns at higher counts because of parallel overhead (\autoref{fig:mpi-time}).
 
 ![Computation time of MPI implementation across
 ranks.](fig2-mpi-time.jpg){#fig:mpi-time width="60%"}
