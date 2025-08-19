@@ -30,10 +30,10 @@ suitable for hydrologic modeling and runoff estimation.
   * [5. Summary](#5-summary)
   * [6. Troubleshooting](#6-troubleshooting)
   * [7. Outputs](#7-outputs)
-* [Acknowlegdements](#acknowlegdements)
+* [Acknowledgments](#acknowledgments)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: hcho, at: Tue Aug 19 12:55:52 MDT 2025 -->
+<!-- Added by: hcho, at: Tue Aug 19 12:58:25 MDT 2025 -->
 
 <!--te-->
 
