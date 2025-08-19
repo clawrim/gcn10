@@ -43,6 +43,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def main():
     np = sys.argv[1] if len(sys.argv) > 1 else "8"
 
@@ -62,10 +63,20 @@ def main():
     shutil.copy(exe, here / "gcn10")
 
     subprocess.run(
-        ["mpirun", "-n", np, str(here / "gcn10"), "-c", "config.txt", "-l", "blocks.txt"],
+        [
+            "mpirun",
+            "-n",
+            np,
+            str(here / "gcn10"),
+            "-c",
+            "config.txt",
+            "-l",
+            "blocks.txt",
+        ],
         cwd=here,
-        check=True
+        check=True,
     )
+
 
 if __name__ == "__main__":
     main()
