@@ -9,7 +9,7 @@ suitable for hydrologic modeling and runoff estimation.
   * [2. Getting Started](#2-getting-started)
     * [2.1. Linux](#21-linux)
     * [2.2. Windows](#22-windows)
-  * [3. Build &amp; Compilation](#3-build--compilation)
+  * [3. Build and Compilation](#3-build-and-compilation)
     * [3.1. Dependencies](#31-dependencies)
     * [3.2. Linux](#32-linux)
     * [3.3. Windows](#33-windows)
@@ -32,7 +32,7 @@ suitable for hydrologic modeling and runoff estimation.
   * [7. Outputs](#7-outputs)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: hcho, at: Mon Aug 18 21:55:34 MDT 2025 -->
+<!-- Added by: hcho, at: Mon Aug 18 23:09:58 MDT 2025 -->
 
 <!--te-->
 
@@ -70,7 +70,7 @@ Make sure the following directories contain the required input files:
 - `blocks/esa_extent_blocks.shp`
 - `lookups/default_lookup_*.csv`
 
-## 3. Build & Compilation
+## 3. Build and Compilation
 
 ### 3.1. Dependencies
 
