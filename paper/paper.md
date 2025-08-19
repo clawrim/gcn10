@@ -213,7 +213,7 @@ specifications in Table \@ref{tab:hardware}.
 |----------------------|----------------------------------------|
 | Architecture         | x86_64 (64-bit)                        |
 | CPU Model            | Intel Core i9-13900KS (13th Gen)       |
-| Memory               | 128 GiB                                |
+| Memory               | 125 GiB                                |
 | Physical cores       | 24                                     |
 | Total threads        | 32                                     |
 | Max frequency        | 6.0 GHz                                |
