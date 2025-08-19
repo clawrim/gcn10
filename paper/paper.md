@@ -76,7 +76,7 @@ scripting-based workflows.
 
 The scale of the data highlights the problem we are trying to address. 
 In the GCN10 workflow, the globe is divided into 2,651 blocks. Each block
-produces 18 rasters, (TODO: explain why 18} a combination of three hydrologic conditions (poor, fair,
+produces 18 rasters---a combination of three hydrologic conditions (poor, fair,
 and good), three antecedent runoff conditions (ARC I, II, and III) and two
 drainage conditions (drained and undrained) for dual hydrologic soil groups
 [@usdachapter7]. This $3 \times 3 \times 2$ combination results in 18 unique
