@@ -76,15 +76,18 @@ int main(int argc, char *argv[])
             snprintf(msg, sizeof(msg), "no ids found in %s", block_ids_file);
             log_message("ERROR", msg, true);
         }
-    } else {
+    }
+    else {
         block_ids = get_all_blocks(&n_blocks);
         if (rank == 0 && (!block_ids || !n_blocks)) {
             if (!block_ids) {
-                snprintf(msg, sizeof(msg), "failed to read shapefile %s", blocks_shp_path);
+                snprintf(msg, sizeof(msg), "failed to read shapefile %s",
+                         blocks_shp_path);
                 log_message("ERROR", msg, true);
             }
             if (!n_blocks) {
-                snprintf(msg, sizeof(msg), "no blocks found in %s", blocks_shp_path);
+                snprintf(msg, sizeof(msg), "no blocks found in %s",
+                         blocks_shp_path);
                 log_message("ERROR", msg, true);
             }
         }
@@ -113,7 +116,7 @@ int main(int argc, char *argv[])
         process_block(block_ids[i], overwrite, n_blocks);
 
         /* rank 0 polls here to drain 
-	 * progress without blocking */
+         * progress without blocking */
         progress_poll(rank, n_blocks);
     }
 
@@ -126,7 +129,8 @@ int main(int argc, char *argv[])
 
     /* print summary on rank 0 */
     if (rank == 0) {
-        snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks", n_blocks, size);
+        snprintf(msg, sizeof(msg), "processed %d blocks on %d ranks",
+                 n_blocks, size);
         log_message("INFO", msg, true);
     }
 

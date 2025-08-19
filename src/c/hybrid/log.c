@@ -1,32 +1,39 @@
 /* logging functions */
 #include "global.h"
-#include <limits.h> /* for cmake PATH_MAX issue */
+#include <limits.h>             /* for cmake PATH_MAX issue */
 
 static FILE *log_fp = NULL;
 
-void init_logging(int rank) {
+void init_logging(int rank)
+{
     /* create logs directory */
     mkdir("logs", 0755);
 
     /* open log file for rank */
-    char log_file[PATH_MAX]; /*MAX_PATH to PATH_MAX*/
+    char log_file[PATH_MAX];    /*MAX_PATH to PATH_MAX */
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
-    snprintf(log_file, PATH_MAX, "logs/parallel_cn_%04d%02d%02d_%02d%02d_rank%d.log",
-             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, rank);
+
+    snprintf(log_file, PATH_MAX,
+             "logs/parallel_cn_%04d%02d%02d_%02d%02d_rank%d.log",
+             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
+             tm->tm_min, rank);
     log_fp = fopen(log_file, "w");
     if (!log_fp) {
         fprintf(stderr, "failed to open log file %s\n", log_file);
     }
 }
 
-void log_message(const char *level, const char *message) {
-    if (!log_fp) return;
+void log_message(const char *level, const char *message)
+{
+    if (!log_fp)
+        return;
 
     /* get timestamp */
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
     char timestamp[32];
+
     strftime(timestamp, 32, "%Y-%m-%d %H:%M:%S", tm);
 
     /* write log */
@@ -34,11 +41,14 @@ void log_message(const char *level, const char *message) {
     fflush(log_fp);
 }
 
-void finalize_logging(void) {
+void finalize_logging(void)
+{
     fflush(stdout);
     fflush(stderr);
 }
 
-void close_logging(void) {
-    if (log_fp) fclose(log_fp);
+void close_logging(void)
+{
+    if (log_fp)
+        fclose(log_fp);
 }

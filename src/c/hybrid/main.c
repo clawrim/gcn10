@@ -19,25 +19,27 @@ int main(int argc, char **argv)
 
     /* log MPI+OMP config on rank 0 */
     if (rank == 0) {
-	int nthreads = omp_get_max_threads();
-	fprintf(stdout,
-		"MPI ranks: %d, OpenMP threads per rank: %d\n",
-		size, nthreads);
+        int nthreads = omp_get_max_threads();
+
+        fprintf(stdout,
+                "MPI ranks: %d, OpenMP threads per rank: %d\n",
+                size, nthreads);
     }
 
     /* parse args: -c config [-l list.txt] */
     for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-c") == 0 && i+1 < argc) {
+        if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
             conf_file = argv[++i];
         }
-        else if (strcmp(argv[i], "-l") == 0 && i+1 < argc) {
+        else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) {
             use_list_mode = true;
             block_ids_file = argv[++i];
         }
     }
 
     if (!conf_file) {
-        if (rank == 0) fprintf(stderr, "missing -c config.txt\n");
+        if (rank == 0)
+            fprintf(stderr, "missing -c config.txt\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -62,7 +64,8 @@ int main(int argc, char **argv)
             fprintf(stderr, "no IDs found in %s\n", block_ids_file);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
-    } else {
+    }
+    else {
         n_blocks = get_all_blocks(&block_ids);
         if (n_blocks < 0) {
             fprintf(stderr, "failed to read shapefile %s\n", blocks_shp_path);

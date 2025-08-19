@@ -366,9 +366,9 @@ void process_block(int block_id, bool overwrite, int total_blocks)
                          "completed condition for %d: %s/%s/%s",
                          block_id, conds[c], hcs[hi], arcs[ai]);
                 log_message("INFO", msg, false);
-		
-		/* report tha 1/18 condition for
-		 * this block has completed */ 
+
+                /* report tha 1/18 condition for
+                 * this block has completed */
                 report_block_completion(block_id, total_blocks);
 
                 free(outpath);

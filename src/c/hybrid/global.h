@@ -39,15 +39,12 @@ int get_all_blocks(int **out_ids);
 uint8_t *load_raster(const char *path,
                      const double *bbox,
                      int *xsize,
-                     int *ysize,
-                     double *gt,
-                     OGRSpatialReferenceH *srs);
-void save_raster(const uint8_t *data,
+                     int *ysize, double *gt, OGRSpatialReferenceH * srs);
+void save_raster(const uint8_t * data,
                  int xsize,
                  int ysize,
                  const double *gt,
-                 OGRSpatialReferenceH srs,
-                 const char *path);
+                 OGRSpatialReferenceH srs, const char *path);
 
 /* core processing */
 void process_block(int block_id);
