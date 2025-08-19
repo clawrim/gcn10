@@ -27,10 +27,10 @@ Clone the repository:
 ### 2.1. Linux
 ```bash
 cd usr/local/src # or wherever you want to compile
-git clone https://github.com/mabdazzam/gcn10
+git clone https://github.com/clawrim/gcn10
 
 # or if you have SSH enabled
-git clone git@github.com:mabdazzam/gcn10.git
+git clone git@github.com:clawrim/gcn10.git
 
 cd gcn10
 ```
