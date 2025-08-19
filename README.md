@@ -30,9 +30,10 @@ suitable for hydrologic modeling and runoff estimation.
   * [5. Summary](#5-summary)
   * [6. Troubleshooting](#6-troubleshooting)
   * [7. Outputs](#7-outputs)
+* [Acknowlegdements](#acknowlegdements)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: hcho, at: Mon Aug 18 23:09:58 MDT 2025 -->
+<!-- Added by: hcho, at: Tue Aug 19 12:55:52 MDT 2025 -->
 
 <!--te-->
 
@@ -273,3 +274,10 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
   - `cn_rasters_drained/`
   - `cn_rasters_undrained/`
 - File naming: `cn_{hc}_{arc}_{block_id}.tif`
+
+# Acknowlegdements
+
+We acknowledge the [New Mexico Water Resources Research Institute](https://nmwrri.nmsu.edu/) (NM WRRI)
+and the New Mexico State Legislature for their support and resources, which
+were essential for this project. This work is funded by the NM WRRI and the
+New Mexico State Legislature under the grant number NMWRRI-SG-FALL2024.
