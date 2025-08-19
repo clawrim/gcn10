@@ -211,8 +211,8 @@ C:\USERNAME\gcn10\c\gcn10.exe
 ### 4.1. Linux
 ```bash
 # if gdal/mpi aren’t in default paths
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-export PATH=/usr/local/bin:$PATH
+export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+export PATH="/usr/local/bin:$PATH"
 
 # serial
 ./gcn10 -c config.txt
