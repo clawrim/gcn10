@@ -1,5 +1,5 @@
-hysogs_data_path=../../../../hsg/HYSOGs250m_4326_lzw.tif
-esa_data_path=../../../../landcover/esa_worldcover_2021.vrt
-blocks_shp_path=../../../../blocks/esa_extent_blocks.shp
-lookup_table_path=../../../../lookups
+hysogs_data_path=../../hsg/HYSOGs250m_4326_lzw.tif
+esa_data_path=../../landcover/esa_worldcover_2021.vrt
+blocks_shp_path=../../blocks/esa_extent_blocks.shp
+lookup_table_path=../../lookups
 log_dir=logs/

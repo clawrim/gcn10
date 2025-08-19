@@ -2,3 +2,6 @@
 src/gee/basic_workflow.js
 src/arcs/arc_conversion.html
 src/c/hybrid/Makefile
+archive/arcs/*.html
+archive/gee/*.js
+archive/hybrid/Makefile

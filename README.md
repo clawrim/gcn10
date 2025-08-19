@@ -38,15 +38,16 @@ suitable for hydrologic modeling and runoff estimation.
 
 ## 1. Repository Structure
 
-- `src/`
+- `src/`  : C MPI Program for parallelized CN generation.
+- `landcover/`  : ESA WorldCover 2021 land cover virtual raster.
+- `hsg/`        : HYSOGs250m hydrologic soil group raster.
+- `blocks/`     : Block shapefile defining spatial extents for processing.
+- `lookups/`    : Lookup tables mapping land cover and HSG to CN values.
+- `archive/`
   - `python/` : Python scripts for serial and parallel CN raster generation.
-  - `c/`      : C programs for high-performance CN computation (OpenMP, MPI, hybrid).
+  - `hybrid/` : Hybrid MPI/OpenMP C program for CN computation.
   - `gee/`    : Google Earth Engine script for dynamic CN raster generation.
-  - `arcs/`   : Quarto reports and reproducible documentation.
-- `landcover/` : ESA WorldCover 2021 land cover virtual raster.
-- `hsg/`       : HYSOGs250m hydrologic soil group raster.
-- `blocks/`      : Block shapefile defining spatial extents for processing.
-- `lookups/`   : Lookup tables mapping land cover and HSG to CN values.
+  - `arcs/`   : Quarto reports and reproducible documentation for Antecedent Runoff Condition.
 
 ## 2. Getting Started
 
@@ -60,7 +61,7 @@ git clone https://github.com/clawrim/gcn10
 # or if you have SSH enabled
 git clone git@github.com:clawrim/gcn10.git
 
-cd gcn10
+cd gcn10/
 ```
 
 ### 2.2. Windows
@@ -83,7 +84,7 @@ Make sure the following directories contain the required input files:
 ### 3.2. Linux
 
 ```bash
-cd mpi/
+cd src/
 mkdir build && cd build
 cmake ..; make
 cd ..
@@ -164,7 +165,7 @@ Either open **x64 Native Tools Command Prompt for VS 2022**, or run manually:
 Replace USERNAME with your user.
 
 ```cmd
-cd C:\USERNAME\gcn10\c
+cd C:\USERNAME\gcn10\src
 mkdir build
 cd build
 ```
@@ -194,7 +195,7 @@ build\Release\gcn10.exe
 
 ##### Step 5: Copy Executable to Source Directory
 
-Your config.txt and input paths are relative to c\, so copy the executable:
+Your config.txt and input paths are relative to test\, so copy the executable:
 
 ```cmd
 copy build\Release\gcn10.exe ..\
@@ -203,7 +204,7 @@ copy build\Release\gcn10.exe ..\
 Now your executable is located at:
 
 ```
-C:\USERNAME\gcn10\c\gcn10.exe
+C:\USERNAME\gcn10\src\gcn10.exe
 ```
 
 ## 4. Running the Program
@@ -218,7 +219,7 @@ export PATH="/usr/local/bin:$PATH"
 ./gcn10 -c config.txt
 
 # serial with block list + overwrite
-./gcn10 -c config.txt -l block_ids.txt -o
+./gcn10 -c config.txt -l blocks.txt -o
 
 # mpi (openmpi or mpich)
 mpirun -n 4 ./gcn10 -c config.txt -o
@@ -228,13 +229,13 @@ mpiexec -n 4 ./gcn10 -c config.txt -o
 
 ### 4.2. Windows
 
-From the mpi\ directory:
+From the src\test\ directory:
 ```cmd
 :: serial
 gcn10.exe -c config.txt
 
 :: serial with block list + overwrite
-gcn10.exe -c config.txt -l block_ids.txt -o
+gcn10.exe -c config.txt -l blocks.txt -o
 
 :: mpi (ms-mpi)
 mpiexec -n 4 gcn10.exe -c config.txt -o
@@ -250,7 +251,7 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
 | Configure with CMake | `cmake .. -G ... -DGDAL_INCLUDE_DIR=... -DGDAL_LIBRARY=...`  |
 | Build                | `cmake --build . --config Release`                           |
 | Copy executable      | `copy build\Release\gcn10.exe ..\`                           |
-| Run                  | `gcn10.exe -c config.txt [-l block_ids.txt] [-o]`            |
+| Run                  | `gcn10.exe -c config.txt [-l blocks.txt] [-o]`            |
 
 ## 6. Troubleshooting
 
