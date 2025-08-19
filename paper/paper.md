@@ -1,5 +1,5 @@
 ---
-title: 'GCN10: A high-performance, MPI-parallelized framework for processing global curve number rasters'
+title: 'GCN10: A high-performance, MPI-parallelized framework for generating global curve number rasters'
 tags:
   - C
   - MPI
