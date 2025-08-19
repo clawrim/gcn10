@@ -77,7 +77,7 @@ Make sure the following directories contain the required input files:
 - **MPI**: Required for parallel processing (MS-MPI on Windows).
 - **GDAL/OGR**: Required for geospatial raster and vector operations.
 - **CMake**: Required for building the project (version 3.12+).
-- **C Compiler**: gcc (linux) or MSVC (Visual Studio 2022 on windows).
+- **C Compiler**: gcc (Linux) or MSVC (Visual Studio 2022 on windows).
 
 
 ### 3.2. Linux
