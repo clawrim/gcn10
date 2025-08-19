@@ -76,8 +76,12 @@ scripting-based workflows.
 
 The scale of the data highlights the problem we are trying to address. 
 In the GCN10 workflow, the globe is divided into 2,651 blocks. Each block
-produces 18 rasters (TODO: explain why 18), and each raster has 36,000 × 36,000 cells
-(about 1.3 billion cells). A single raster stored as uint8 requires about
+produces 18 rasters---a combination of three hydrologic conditions (poor, fair,
+and good), three antecedent runoff conditions (ARC I, II, and III) and two
+drainage conditions (drained and undrained) for dual hydrologic soil groups
+[@usdachapter7]. This $3 \times 3 \times 2$ combination results in 18 unique
+combinations for CN, and each raster has 36,000 × 36,000 cells (about 1.3 billion cells).
+A single raster stored as uint8 requires about
 1.3 GB in memory. One block with 18 rasters requires about 23 GB. When extended
 across all blocks and all 18 conditions, the total data volume is more than 60 TB.
 Larger data types such as uint16 or float32 can double or quadruple these numbers.
@@ -104,6 +108,19 @@ hours and makes it possible to create CN datasets at resolutions and extents
 that were previously impractical.
 
 # Implementations
+
+## Google Earth Engine
+
+Google Earth Engine (GEE) [@gorelick2017gee] is very effective for exploratory analysis and
+prototyping because it provides direct access to global datasets and a
+scalable cloud environment. Implementations in GEE allow rapid testing,
+visualization, and comparison of Curve Number generation methods without
+handling local storage or compute resources. However, exporting large
+rasters from GEE is constrained: very large files cannot be exported to
+Google Drive or downloaded for local use due to system limits. Thus, while
+GEE is excellent for interactive analysis and reproducibility,large-scale
+production workflows such as GCN10 require dedicated local or HPC environments
+to generate and store the full set of global rasters.
 
 ## Python Multiprocessing
 
