@@ -79,12 +79,12 @@ import os
 from tqdm import tqdm  # Progress bar
 
 # Paths
-HYSOGS_DATA_PATH = "../hsg/HYSOGs250m.tif"
-ESA_DATA_PATH = "../landcover/esa_worldcover_2021.vrt"
-LOOKUP_TABLE_PATH = "../lookups"
+HYSOGS_DATA_PATH = "../../hsg/HYSOGs250m.tif"
+ESA_DATA_PATH = "../../landcover/esa_worldcover_2021.vrt"
+LOOKUP_TABLE_PATH = "../../lookups"
 OUTPUT_DIR_DRAINED = "cn_rasters_drained"
 OUTPUT_DIR_UNDRAINED = "cn_rasters_undrained"
-BLOCKS_SHP_PATH = "shps/esa_extent_blocks.shp"
+BLOCKS_SHP_PATH = "../../blocks/esa_extent_blocks.shp"
 
 # Create output directories if they do not exist
 os.makedirs(OUTPUT_DIR_DRAINED, exist_ok=True)
