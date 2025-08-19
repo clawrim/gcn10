@@ -14,16 +14,16 @@ suitable for hydrologic modeling and runoff estimation.
     * [3.2. Linux](#32-linux)
     * [3.3. Windows](#33-windows)
       * [3.3.1. Install Dependencies](#331-install-dependencies)
-      * [(a) Visual Studio 2022](#a-visual-studio-2022)
-      * [(b) Microsoft MPI](#b-microsoft-mpi)
-      * [(c) GDAL via OSGeo4W](#c-gdal-via-osgeo4w)
-      * [(d) Install CMake](#d-install-cmake)
+        * [(a) Visual Studio 2022](#a-visual-studio-2022)
+        * [(b) Microsoft MPI](#b-microsoft-mpi)
+        * [(c) GDAL via OSGeo4W](#c-gdal-via-osgeo4w)
+        * [(d) Install CMake](#d-install-cmake)
       * [3.3.2 Compilation](#332-compilation)
-      * [Step 1: Open MSVC Environment](#step-1-open-msvc-environment)
-      * [Step 2: Create Build Directory](#step-2-create-build-directory)
-      * [Step 3: Configure with CMake](#step-3-configure-with-cmake)
-      * [Step 4: Build the Executable](#step-4-build-the-executable)
-      * [Step 5: Copy Executable to Source Directory](#step-5-copy-executable-to-source-directory)
+        * [Step 1: Open MSVC Environment](#step-1-open-msvc-environment)
+        * [Step 2: Create Build Directory](#step-2-create-build-directory)
+        * [Step 3: Configure with CMake](#step-3-configure-with-cmake)
+        * [Step 4: Build the Executable](#step-4-build-the-executable)
+        * [Step 5: Copy Executable to Source Directory](#step-5-copy-executable-to-source-directory)
   * [4. Running the Program](#4-running-the-program)
     * [4.1. Linux](#41-linux)
     * [4.2. Windows](#42-windows)
@@ -32,7 +32,7 @@ suitable for hydrologic modeling and runoff estimation.
   * [7. Outputs](#7-outputs)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: hcho, at: Mon Aug 18 21:51:25 MDT 2025 -->
+<!-- Added by: hcho, at: Mon Aug 18 21:55:34 MDT 2025 -->
 
 <!--te-->
 
@@ -95,13 +95,13 @@ Ensure development packages for GDAL, MPI (e.g., MPICH/OpenMPI), and OpenMP are 
 ### 3.3. Windows
 
 #### 3.3.1. Install Dependencies
-#### (a) Visual Studio 2022
+##### (a) Visual Studio 2022
 
 - Download: https://visualstudio.microsoft.com/vs/
 - Install the **"Desktop development with C++"** workload.
 - Ensure `cmake`, `cl.exe`, and `ninja` are included in the environment.
 
-#### (b) Microsoft MPI
+##### (b) Microsoft MPI
 
 Install both the SDK and the Runtime:
 
@@ -126,7 +126,7 @@ After installation:
 C:\Program Files\Microsoft MPI\Bin
 ```
 
-#### (c) GDAL via OSGeo4W
+##### (c) GDAL via OSGeo4W
 
 - Download the OSGeo4W installer: https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
 - Choose **Advanced Install**.
@@ -145,12 +145,13 @@ After installation:
 C:\OSGeo4W\bin
 ```
 
-#### (d) Install CMake
- Download from [CMake](https://cmake.org/download/) and install
+##### (d) Install CMake
+
+Download from [CMake](https://cmake.org/download/) and install
 
 #### 3.3.2 Compilation
 
-#### Step 1: Open MSVC Environment
+##### Step 1: Open MSVC Environment
 
 Either open **x64 Native Tools Command Prompt for VS 2022**, or run manually:
 
@@ -158,7 +159,7 @@ Either open **x64 Native Tools Command Prompt for VS 2022**, or run manually:
 "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvars64.bat"
 ```
 
-#### Step 2: Create Build Directory
+##### Step 2: Create Build Directory
 
 Replace USERNAME with your user.
 
@@ -168,7 +169,7 @@ mkdir build
 cd build
 ```
 
-#### Step 3: Configure with CMake
+##### Step 3: Configure with CMake
 
 ```cmd
 cmake .. -G "Visual Studio 17 2022" -A x64 ^
@@ -179,7 +180,7 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
 
 > Use ^ for line continuation in CMD.
 
-#### Step 4: Build the Executable
+##### Step 4: Build the Executable
 
 ```cmd
 cmake --build . --config Release
@@ -191,7 +192,7 @@ Output will be located at:
 build\Release\gcn10.exe
 ```
 
-#### Step 5: Copy Executable to Source Directory
+##### Step 5: Copy Executable to Source Directory
 
 Your config.txt and input paths are relative to c\, so copy the executable:
 
