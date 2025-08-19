@@ -17,7 +17,7 @@ suitable for hydrologic modeling and runoff estimation.
       * [(a) Visual Studio 2022](#a-visual-studio-2022)
       * [(b) Microsoft MPI](#b-microsoft-mpi)
       * [(c) GDAL via OSGeo4W](#c-gdal-via-osgeo4w)
-      * [(d) <strong>Install CMake</strong>](#d-install-cmake)
+      * [(d) Install CMake](#d-install-cmake)
       * [3.3.2 Compilation](#332-compilation)
       * [Step 1: Open MSVC Environment](#step-1-open-msvc-environment)
       * [Step 2: Create Build Directory](#step-2-create-build-directory)
@@ -32,7 +32,7 @@ suitable for hydrologic modeling and runoff estimation.
   * [7. Outputs](#7-outputs)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: hcho, at: Mon Aug 18 21:50:29 MDT 2025 -->
+<!-- Added by: hcho, at: Mon Aug 18 21:51:25 MDT 2025 -->
 
 <!--te-->
 
@@ -145,7 +145,7 @@ After installation:
 C:\OSGeo4W\bin
 ```
 
-#### (d) **Install CMake**
+#### (d) Install CMake
  Download from [CMake](https://cmake.org/download/) and install
 
 #### 3.3.2 Compilation
