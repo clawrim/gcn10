@@ -11,6 +11,9 @@ than the current C MPI implementation in [`src/`](../src/), which is the
 - **arcs/**  
   Analysis of Antecedent Runoff Condition (ARC).
 
+- gee/
+  Script to generate GCN10 in Google Earth Engine.
+
 - **python/**  
   Python implementations of CN generation:  
   - Serial version.  
