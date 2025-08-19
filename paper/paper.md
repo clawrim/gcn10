@@ -1,5 +1,5 @@
 ---
-title: 'GCN10: a high-performance, MPI-parallelized global curve number processing raster framework'
+title: 'GCN10: A high-performance, MPI-parallelized framework for processing global curve number rasters'
 tags:
   - C
   - MPI
@@ -22,14 +22,14 @@ bibliography: paper.bib
 
 # Summary
 
-The Soil Conservation Service (SCS) Curve Number (CN) Method remains one of
+The Soil Conservation Service (SCS) Curve Number (CN) method remains one of
 the most widely adopted approaches for estimating runoff volume and peak
 discharge at the watershed scale [@usda1972tr55; @usda1986tr55]. As the name
 implies, the CN value is the core input to this method, and generating
-high-resolution CN maps for large watersheds or continental domains is
+high-resolution CN raster maps for large watersheds or continental domains is
 computationally demanding. It is becoming increasingly critical to simulate
-hydrologic systems at higher resolutions to achieve accurate results, such
-as floodplain mapping at the household or property scale
+hydrologic systems at higher resolutions to achieve accurate results for different hydrologic modeling purposes, such
+as flood inundation mapping at the household or property scale
 [@wing2019floodrisk]. This greater level of detail improves accuracy but
 comes with tradeoffs in computation time, memory requirements, and the
 limited efficiency of many computing environments. The two major challenges
@@ -37,22 +37,23 @@ are either the lack of availability of such high-resolution spatial data or
 the absence of efficient computing tools that can provide better processing
 performance than traditional GIS platforms.
 
-**GCN10** is a high-performance program written in C with the Message Passing
-Interface (MPI) parallelization [@gropp1999mpi]. It generates global Curve
-Number (CN) datasets for hydrologic modeling and runoff estimation. The
+The Global CN 10 m (GCN10) is a high-performance framework written in C with multi-node distributed parallelization in mind using the Message Passing
+Interface (MPI) [@gropp1999mpi]. It generates global
+CN datasets for hydrologic modeling and runoff estimation. The
 program uses ESA WorldCover 10 m land cover data [@zanaga2021worldcover],
 accessed through a GDAL virtual raster from the QGIS Curve Number Generator
-Plugin [@siddiqui2020curve]. It combines this with the 250 m Hydrologic Soil
+Plugin [@siddiqui2020curve]. It combines this land cover data with the 250 m Hydrologic Soil
 Group (HYSOGs250m) dataset [@ross2018hysogs]. CN values are assigned through a
 lookup table developed from [@usdachapter9]. This produces CN rasters for global
 or regional use.
-MPI enables distributed-memory parallelization [@gropp1999mpi]. GCN10 splits
+MPI enables distributed-memory parallelization using multiple processes [@gropp1999mpi]. GCN10 splits
 large rasters into blocks and processes them across many cores or nodes in HPC
 systems. The block-based design provides near-linear scaling on modern
 hardware [@amdahl1967validity; @gustafson1988reevaluating]. As a result,
 terabyte-scale datasets can be processed in hours instead of months. GCN10 is
-cross-platform, OSI-licensed, and suitable for both research and operational
+cross-platform and suitable for both research and operational
 hydrologic workflows.
+It is licensed under the GNU General Public License (GPL) v3, which is approved by the Open Source Initiative (OSI).
 
 # Statement of Need
 
@@ -65,7 +66,7 @@ CN mapping is not practical in standard computing environments.
 
 Another problem is scalability. Many workflows are built for watershed or
 basin-scale studies. They do not extend across larger domains and often
-require manual GIS steps. This reduces automation and makes reproducible
+require manual GIS steps. This typical workflow reduces automation and makes reproducible
 research difficult [@stodden2016reproducibility]. Handling global datasets
 such as ESA WorldCover at 10m resolution [@zanaga2021worldcover] and
 HYSOGs250m soils resampled to 10m [@ross2018hysogs] pushes these methods
@@ -74,8 +75,8 @@ rasters produces data volumes that are simply too large for serial or
 scripting-based workflows.
 
 The scale of the data highlights the problem we are trying to address. 
-In the GCN10 workflow the globe is divided into 2,651 blocks. Each block
-produces 18 rasters, and each raster has 36,000 × 36,000 cells
+In the GCN10 workflow, the globe is divided into 2,651 blocks. Each block
+produces 18 rasters (TODO: explain why 18), and each raster has 36,000 × 36,000 cells
 (about 1.3 billion cells). A single raster stored as uint8 requires about
 1.3 GB in memory. One block with 18 rasters requires about 23 GB. When extended
 across all blocks and all 18 conditions, the total data volume is more than 60 TB.
@@ -87,10 +88,10 @@ Final compressed outputs still occupy about 1.2 TB of disk space.
 
 These requirements make it clear why serial or low-parallelism methods
 cannot keep up. Even scripting-based workflows with limited parallelism are
-too slow. Input and output become bottlenecks, memory demands exceed what
-most systems provide, and runtimes stretch from days into weeks. This
-prevents hydrologic modeling from reaching the resolution needed for
-accurate applications such as property-scale floodplain mapping
+too slow. Input and output (I/O) become bottlenecks, memory demands exceed what
+most systems provide, and runtimes stretch from days into weeks. These challenges
+prevent hydrologic modeling from reaching the resolution needed for
+accurate applications such as property-scale flood inundation mapping
 [@wing2019floodrisk].
 
 GCN10 addresses these barriers directly. It provides an automated workflow
@@ -106,11 +107,11 @@ that were previously impractical.
 
 ## Python Multiprocessing
 
-Development began with a serial Python workflow for generating Curve Number
+Development began with a serial Python workflow for generating CN
 rasters from global datasets. While functional, this approach was too slow
 for large-scale domains. To improve performance, a parallel version using
 the Python `multiprocessing.Pool` library was created [@python-multiprocessing].
-This reduced runtime compared to the serial version but still faced major
+This Python-based parallelization reduced runtime compared to the serial version but still faced major
 limits. Process startup and inter-process communication are slower than in
 compiled languages. In addition, the Global Interpreter Lock (GIL) restricts
 efficient use of threads [@beazley2010gil], forcing parallelism to rely on
@@ -120,16 +121,16 @@ inefficient and unsuitable for global CN mapping.
 ## C MPI/OpenMP
 
 A hybrid MPI/OpenMP parallelization scheme was implemented in C, using MPI 
-for distributed memory parallelism and OpenMP for shared memory parallelism.
+for distributed memory parallelism and OpenMP [@dagum1998openmp] for shared memory parallelism.
 In this design, MPI forked individual processes for each block, while the
 internal CN computation logic within a block was parallelized with
-OpenMP [@dagum1998openmp]. The aim was to combine coarse-grain parallelism
+OpenMP. The aim was to combine coarse-grain parallelism
 across nodes with fine-grain threading within each process. In principle
 this reduces MPI rank counts and exploits shared memory at the node level
 [@gropp1999mpi].
 
 In practice, the hybrid model gave little improvement. Most of the runtime
-was still dominated by I/O. Since GDAL raster writing is not thread safe
+was still dominated by I/O. Since GDAL raster writing is not thread-safe
 [@gdal-rfc101], it limited the benefit of OpenMP and meant that overall
 throughput was similar to pure MPI. For this workload, the independence of
 block-level tasks made OpenMP threading unnecessary. The results of this
@@ -138,13 +139,13 @@ implementation are presented in the results section.
 ## C MPI
 
 The workflow was then reimplemented fully in C with the Message Passing
-Interface (MPI) for distributed memory parallelization [@mpi1994standard].
+Interface (MPI) for distributed-memory parallelization [@mpi1994standard].
 In this design, the global raster domain is partitioned into fixed spatial
 blocks and each block is assigned to an MPI rank for independent computation.
 Communication between ranks is limited to initialization and final
 synchronization, which minimizes message passing overhead. This structure
-achieves near-linear strong scaling across cores and nodes in high-
-performance computing (HPC) environments. By avoiding interpreter overhead
+achieves near-linear strong scaling across cores and nodes in
+High-Performance Computing (HPC) environments. By avoiding interpreter overhead
 and using efficient compiled code, the C MPI implementation delivers
 order-of-magnitude speedups compared to the Python versions.
 
@@ -167,7 +168,7 @@ design included the following elements:
   - All blocks contained valid data.
   - Inputs: ESA WorldCover (10m) [@zanaga2021worldcover] and HYSOGs250m
     soils resampled to 10m [@ross2018hysogs].
-  - Each block was processed for all 18 Curve Number conditions.
+  - Each block was processed for all 18 CN conditions.
 
 - I/O and storage
   - Local NVMe SSD storage only; no network file systems used.
@@ -213,20 +214,13 @@ specifications in Table \@ref{tab:hardware}.
 | Architecture         | x86_64 (64-bit)                        |
 | CPU Model            | Intel Core i9-13900KS (13th Gen)       |
 | Memory               | 128 GiB                                |
-| Sockets              | 1                                      |
 | Physical cores       | 24                                     |
-| Threads per core     | 2                                      |
 | Total threads        | 32                                     |
 | Max frequency        | 6.0 GHz                                |
-| Min frequency        | 0.8 GHz                                |
-| L1 cache             | 896 KiB (data), 1.3 MiB (instruction)  |
-| L2 cache             | 32 MiB (12 instances)                  |
-| L3 cache             | 36 MiB (shared)                        |
 | NUMA nodes           | 1                                      |
-| Operating system     | Slackware Linux 15+                    |
-| Kernel version       | 6.10.7 (x86_64)                        |
-| Compiler collection  | GNU Compiler Collection (GCC) 14.2.0   |
-| MPI Compiler         | Open MPI version 4.1.6                 |
+| Operating system     | Linux 6.6.23                           |
+| Compiler collection  | GNU Compiler Collection (GCC) 13.2.0   |
+| MPI Compiler         | Open MPI version 4.1.4                 |
 
 : Hardware and system specifications for performance testing. {#tab:hardware}
 
@@ -237,7 +231,7 @@ specifications in Table \@ref{tab:hardware}.
 The Python `multiprocessing.Pool` implementation with 16 workers,
 required 21,207 seconds (~5 hours 54 minutes) to process the 32-blocks
 test set. This confirmed that Python overheads in memory handling and
-process management make it unsuitable for global-scale Curve Number
+process management make it unsuitable for global-scale CN
 mapping. Assuming ideal speedup, running same tests as the C implementations
 would have taken ~230 days.
 
