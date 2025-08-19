@@ -306,7 +306,8 @@ balanced utilization without oversubscription.
 ![MPI performance metrics across ranks, showing speedup, efficiency, and
 CPU utilization.](fig3-mpi.jpg){#fig:mpi-summary width="85%"}
 
-# Acknowlegdements
+# Acknowledgments
+
 We acknowledge the New Mexico Water Resources Research Institute (NM WRRI)
 and the New Mexico State Legislature for their support and resources, which
 were essential for this project. This work is funded by the NM WRRI and the

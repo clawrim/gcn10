@@ -275,7 +275,7 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
   - `cn_rasters_undrained/`
 - File naming: `cn_{hc}_{arc}_{block_id}.tif`
 
-# Acknowlegdements
+# Acknowledgments
 
 We acknowledge the [New Mexico Water Resources Research Institute](https://nmwrri.nmsu.edu/) (NM WRRI)
 and the New Mexico State Legislature for their support and resources, which
