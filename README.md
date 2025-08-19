@@ -54,7 +54,7 @@ Clone the repository:
 
 ### 2.1. Linux
 ```bash
-cd usr/local/src # or wherever you want to compile
+cd ~/usr/local/src # or wherever you want to compile
 git clone https://github.com/clawrim/gcn10
 
 # or if you have SSH enabled
