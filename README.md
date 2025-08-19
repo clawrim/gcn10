@@ -15,7 +15,7 @@ suitable for hydrologic modeling and runoff estimation.
   - `arcs/`   : Quarto reports and reproducible documentation.
 - `landcover/` : ESA WorldCover 2021 land cover virtual raster.
 - `hsg/`       : HYSOGs250m hydrologic soil group raster.
-- `shps/`      : Block shapefile defining spatial extents for processing.
+- `blocks/`      : Block shapefile defining spatial extents for processing.
 - `lookups/`   : Lookup tables mapping land cover and HSG to CN values.
 
 ---
@@ -39,7 +39,7 @@ cd gcn10
 Make sure the following directories contain the required input files:
 - `landcover/esa_worldcover_2021.vrt`
 - `hsg/HYSOGs250m.tif`
-- `shps/esa_extent_blocks.shp`
+- `blocks/esa_extent_blocks.shp`
 - `lookups/default_lookup_*.csv`
 
 ---
