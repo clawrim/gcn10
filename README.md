@@ -4,6 +4,38 @@ GCN10 is a high-resolution, open-source global Curve Number (CN) dataset generat
 It combines ESA WorldCover land cover data and HYSOGs250m soil data to create CN rasters
 suitable for hydrologic modeling and runoff estimation.
 
+<!--ts-->
+  * [1. Repository Structure](#1-repository-structure)
+  * [2. Getting Started](#2-getting-started)
+    * [2.1. Linux](#21-linux)
+    * [2.2. Windows](#22-windows)
+  * [3. Build &amp; Compilation](#3-build--compilation)
+    * [3.1. Dependencies](#31-dependencies)
+    * [3.2. Linux](#32-linux)
+    * [3.3. Windows](#33-windows)
+      * [3.3.1. Install Dependencies](#331-install-dependencies)
+      * [(a) Visual Studio 2022](#a-visual-studio-2022)
+      * [(b) Microsoft MPI](#b-microsoft-mpi)
+      * [(c) GDAL via OSGeo4W](#c-gdal-via-osgeo4w)
+      * [(d) <strong>Install CMake</strong>](#d-install-cmake)
+      * [3.3.2 Compilation](#332-compilation)
+      * [Step 1: Open MSVC Environment](#step-1-open-msvc-environment)
+      * [Step 2: Create Build Directory](#step-2-create-build-directory)
+      * [Step 3: Configure with CMake](#step-3-configure-with-cmake)
+      * [Step 4: Build the Executable](#step-4-build-the-executable)
+      * [Step 5: Copy Executable to Source Directory](#step-5-copy-executable-to-source-directory)
+  * [4. Running the Program](#4-running-the-program)
+    * [4.1. Linux](#41-linux)
+    * [4.2. Windows](#42-windows)
+  * [5. Summary](#5-summary)
+  * [6. Troubleshooting](#6-troubleshooting)
+  * [7. Outputs](#7-outputs)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+<!-- Added by: hcho, at: Mon Aug 18 21:50:29 MDT 2025 -->
+
+<!--te-->
+
 ## 1. Repository Structure
 
 - `src/`
