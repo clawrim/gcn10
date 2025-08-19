@@ -4,8 +4,6 @@ GCN10 is a high-resolution, open-source global Curve Number (CN) dataset generat
 It combines ESA WorldCover land cover data and HYSOGs250m soil data to create CN rasters
 suitable for hydrologic modeling and runoff estimation.
 
----
-
 ## 1. Repository Structure
 
 - `src/`
@@ -17,8 +15,6 @@ suitable for hydrologic modeling and runoff estimation.
 - `hsg/`       : HYSOGs250m hydrologic soil group raster.
 - `blocks/`      : Block shapefile defining spatial extents for processing.
 - `lookups/`   : Lookup tables mapping land cover and HSG to CN values.
-
----
 
 ## 2. Getting Started
 
@@ -41,8 +37,6 @@ Make sure the following directories contain the required input files:
 - `hsg/HYSOGs250m.tif`
 - `blocks/esa_extent_blocks.shp`
 - `lookups/default_lookup_*.csv`
-
----
 
 ## 3. Build & Compilation
 
@@ -179,8 +173,6 @@ Now your executable is located at:
 C:\USERNAME\gcn10\c\gcn10.exe
 ```
 
----
-
 ## 4. Running the Program
 
 ### 4.1. Linux
@@ -215,8 +207,6 @@ gcn10.exe -c config.txt -l block_ids.txt -o
 mpiexec -n 4 gcn10.exe -c config.txt -o
 ```
 
----
-
 ## 5. Summary
 
 | Task                 | Command / Action                                             |
@@ -228,8 +218,6 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
 | Build                | `cmake --build . --config Release`                           |
 | Copy executable      | `copy build\Release\gcn10.exe ..\`                           |
 | Run                  | `gcn10.exe -c config.txt [-l block_ids.txt] [-o]`            |
-
----
 
 ## 6. Troubleshooting
 
@@ -243,8 +231,6 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
   - Ensure mpiexec.exe is in your system PATH
 
 - Read the log files in written rankwise in the logs/ subdir for other errors. 
-
----
 
 ## 7. Outputs
 
