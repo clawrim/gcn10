@@ -60,7 +60,9 @@ Clone the repository:
 
 ### 2.1. Linux
 ```bash
-cd ~/usr/local/src # or wherever you want to compile
+# ~/usr/local/src or wherever you want to compile
+[ -d ~/usr/local/src ] || mkdir -p ~/usr/local/src
+cd ~/usr/local/src
 git clone https://github.com/clawrim/gcn10
 
 # or if you have SSH enabled
@@ -89,11 +91,14 @@ Make sure the following directories contain the required input files:
 ### 3.2. Linux
 
 ```bash
-cd src/
-mkdir build && cd build
-cmake ..; make
-cd ..
-cp build/gcn10 .
+(
+  cd src
+  [ -d build ] && rm -rf build
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/usr/local && cmake --build . -v &&
+  cmake --install .
+)
 ```
 
 Ensure development packages for GDAL, MPI (e.g., MPICH/OpenMPI), and OpenMP are installed.
@@ -105,7 +110,6 @@ Ensure development packages for GDAL, MPI (e.g., MPICH/OpenMPI), and OpenMP are 
 
 - Download: https://visualstudio.microsoft.com/vs/
 - Install the **"Desktop development with C++"** workload.
-- Ensure `cmake`, `cl.exe`, and `ninja` are included in the environment.
 
 ##### (b) Microsoft MPI
 
@@ -240,43 +244,46 @@ gdal-config --version
 ```
 #### 3.4.2 Configure and Build
 
-- Assuming the source code is cloned in ~/usr/local/src/
+- Assuming the source code is cloned (e.g., `~/usr/local/src/gcn10` by following [Section 2.1](#21-linux))
 
 ```bash
-cd gcn10
-mkdir build
-cd build
-cmake ..;make
+(
+  cd src
+  [ -d build ] && rm -rf build
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/usr/local && cmake --build . -v &&
+  cmake --install .
+)
 ```
-- Verbose compilation for debugging
-```bash
-( [ -d build ] && rm -rf build; mkdir build; cd build; { cmake .. && cmake --build . -v; } >& build.log )
-```
-The build log (`build.log`) and the executable (`gcn10`) will be created in `gcn10/src/build/`
+
+The executable (`gcn10`) will be installed in `<CMAKE_INSTALL_PREFIX>/bin` (e.g., `~/usr/local/bin` following this Section).
 
 ## 4. Running the Program
 
 ### 4.1. Linux
 ```bash
-# if gdal/mpi aren’t in default paths
-export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-export PATH="/usr/local/bin:$PATH"
+# use your CMAKE_INSTALL_PREFIX if it's different from $HOME/usr/local
+# e.g., export PATH="<CMAKE_INSTALL_PREFIX>/bin:$PATH"
+export PATH="$HOME/usr/local/bin:$PATH"
+
+cd src/test/
 
 # serial
-./gcn10 -c config.txt
+gcn10 -c config.txt
 
 # serial with block list + overwrite
-./gcn10 -c config.txt -l blocks.txt -o
+gcn10 -c config.txt -l blocks.txt -o
 
 # mpi (openmpi or mpich)
-mpirun -n 4 ./gcn10 -c config.txt -o
+mpirun -n 4 gcn10 -c config.txt -o
 # or (some setups)
-mpiexec -n 4 ./gcn10 -c config.txt -o
+mpiexec -n 4 gcn10 -c config.txt -o
 ```
 
 ### 4.2. Windows
 
-From the src\test\ directory:
+From the `src\test\` directory:
 ```cmd
 :: serial
 gcn10.exe -c config.txt
