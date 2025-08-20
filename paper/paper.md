@@ -10,13 +10,16 @@ tags:
   - GIS
 authors:
   - name: Abdullah Azzam
+    orcid: 0000-0003-4314-1340
     affiliation: 1
   - name: Huidae Cho
+    orcid: 0000-0003-1878-1274
+    corresponding: true
     affiliation: 1
 affiliations:
   - name: Department of Civil Engineering, New Mexico State University, Las Cruces, NM, USA
     index: 1
-date: 2025-08-13
+date: 20 August 2025
 bibliography: paper.bib
 ---
 
@@ -28,32 +31,33 @@ discharge at the watershed scale [@usda1972tr55; @usda1986tr55]. As the name
 implies, the CN value is the core input to this method, and generating
 high-resolution CN raster maps for large watersheds or continental domains is
 computationally demanding. It is becoming increasingly critical to simulate
-hydrologic systems at higher resolutions to achieve accurate results for different hydrologic modeling purposes, such
-as flood inundation mapping at the household or property scale
-[@wing2019floodrisk]. This greater level of detail improves accuracy but
-comes with tradeoffs in computation time, memory requirements, and the
-limited efficiency of many computing environments. The two major challenges
-are either the lack of availability of such high-resolution spatial data or
-the absence of efficient computing tools that can provide better processing
-performance than traditional GIS platforms.
+hydrologic systems at higher resolutions to achieve accurate results for
+different hydrologic modeling purposes, such as flood inundation mapping at the
+household or property scale [@wing2019floodrisk]. This greater level of detail
+improves accuracy but comes with tradeoffs in computation time, memory
+requirements, and the limited efficiency of many computing environments.
+The two major challenges are either the lack of availability of such
+high-resolution spatial data or the absence of efficient computing tools that
+can provide better processing performance than traditional GIS platforms.
 
-The Global CN 10 m (GCN10) is a high-performance framework written in C with multi-node distributed parallelization in mind using the Message Passing
-Interface (MPI) [@gropp1999mpi]. It generates global
-CN datasets for hydrologic modeling and runoff estimation. The
-program uses ESA WorldCover 10 m land cover data [@zanaga2021worldcover],
-accessed through a GDAL virtual raster from the QGIS Curve Number Generator
-Plugin [@siddiqui2020curve]. It combines this land cover data with the 250 m Hydrologic Soil
-Group (HYSOGs250m) dataset [@ross2018hysogs]. CN values are assigned through a
-lookup table developed from [@usdachapter9]. This produces CN rasters for global
-or regional use.
-MPI enables distributed-memory parallelization using multiple processes [@gropp1999mpi]. GCN10 splits
-large rasters into blocks and processes them across many cores or nodes in HPC
-systems. The block-based design provides near-linear scaling on modern
-hardware [@amdahl1967validity; @gustafson1988reevaluating]. As a result,
-terabyte-scale datasets can be processed in hours instead of months. GCN10 is
-cross-platform and suitable for both research and operational
-hydrologic workflows.
-It is licensed under the GNU General Public License (GPL) v3, which is approved by the Open Source Initiative (OSI).
+The Global CN 10 m (GCN10) is a high-performance framework written in C with
+multi-node distributed parallelization in mind using the Message Passing
+Interface (MPI) [@gropp1999mpi]. It generates global CN datasets for hydrologic
+modeling and runoff estimation. The program uses ESA WorldCover 10 m land cover
+data [@zanaga2021worldcover], accessed through a GDAL virtual raster from the
+QGIS Curve Number Generator Plugin [@siddiqui2020curve]. It combines this land
+cover data with the 250 m Hydrologic Soil Group (HYSOGs250m) dataset
+[@ross2018hysogs]. CN values are assigned through a lookup table developed from
+[@usdachapter9]. This produces CN rasters for global or regional use.
+MPI enables distributed-memory parallelization using multiple processes
+[@gropp1999mpi]. GCN10 splits large rasters into blocks and processes them
+across many cores or nodes in HPC systems. The block-based design provides
+near-linear scaling on modern hardware
+[@amdahl1967validity; @gustafson1988reevaluating]. As a result, terabyte-scale
+datasets can be processed in hours instead of months. GCN10 is cross-platform
+and suitable for both research and operational hydrologic workflows. It is
+licensed under the GNU General Public License (GPL) v3, which is approved by
+the Open Source Initiative (OSI).
 
 # Statement of Need
 
@@ -66,9 +70,9 @@ CN mapping is not practical in standard computing environments.
 
 Another problem is scalability. Many workflows are built for watershed or
 basin-scale studies. They do not extend across larger domains and often
-require manual GIS steps. This typical workflow reduces automation and makes reproducible
-research difficult [@stodden2016reproducibility]. Handling global datasets
-such as ESA WorldCover at 10m resolution [@zanaga2021worldcover] and
+require manual GIS steps. This typical workflow reduces automation and makes
+reproducible research difficult [@stodden2016reproducibility]. Handling global
+datasets such as ESA WorldCover at 10m resolution [@zanaga2021worldcover] and
 HYSOGs250m soils resampled to 10m [@ross2018hysogs] pushes these methods
 far beyond their design. Combining these sources into complete global
 rasters produces data volumes that are simply too large for serial or
@@ -80,21 +84,21 @@ produces 18 rasters---a combination of three hydrologic conditions (poor, fair,
 and good), three antecedent runoff conditions (ARC I, II, and III) and two
 drainage conditions (drained and undrained) for dual hydrologic soil groups
 [@usdachapter7]. This $3 \times 3 \times 2$ combination results in 18 unique
-combinations for CN, and each raster has 36,000 × 36,000 cells (about 1.3 billion cells).
-A single raster stored as uint8 requires about
+combinations for CN, and each raster has 36,000 × 36,000 cells
+(about 1.3 billion cells). A single raster stored as uint8 requires about
 1.3 GB in memory. One block with 18 rasters requires about 23 GB. When extended
 across all blocks and all 18 conditions, the total data volume is more than 60 TB.
 Larger data types such as uint16 or float32 can double or quadruple these numbers.
 A single global raster contains 34.35 billion cells, and 18 such rasters are 
 required to represent the full range of CN conditions. Running the entire globe
-at once would need about 7 TB of memory, even with the most compact representation.
-Final compressed outputs still occupy about 1.2 TB of disk space.
+at once would need about 7 TB of memory, even with the most compact
+representation. Final compressed outputs still occupy about 1.2 TB of disk space.
 
 These requirements make it clear why serial or low-parallelism methods
 cannot keep up. Even scripting-based workflows with limited parallelism are
 too slow. Input and output (I/O) become bottlenecks, memory demands exceed what
-most systems provide, and runtimes stretch from days into weeks. These challenges
-prevent hydrologic modeling from reaching the resolution needed for
+most systems provide, and runtimes stretch from days into weeks. These
+challenges prevent hydrologic modeling from reaching the resolution needed for
 accurate applications such as property-scale flood inundation mapping
 [@wing2019floodrisk].
 
@@ -111,9 +115,9 @@ that were previously impractical.
 
 ## Google Earth Engine
 
-Google Earth Engine (GEE) [@gorelick2017gee] is very effective for exploratory analysis and
-prototyping because it provides direct access to global datasets and a
-scalable cloud environment. Implementations in GEE allow rapid testing,
+Google Earth Engine (GEE) [@gorelick2017gee] is very effective for exploratory
+analysis and prototyping because it provides direct access to global datasets
+and a scalable cloud environment. Implementations in GEE allow rapid testing,
 visualization, and comparison of Curve Number generation methods without
 handling local storage or compute resources. However, exporting large
 rasters from GEE is constrained: very large files cannot be exported to
@@ -128,23 +132,22 @@ Development began with a serial Python workflow for generating CN
 rasters from global datasets. While functional, this approach was too slow
 for large-scale domains. To improve performance, a parallel version using
 the Python `multiprocessing.Pool` library was created [@python-multiprocessing].
-This Python-based parallelization reduced runtime compared to the serial version but still faced major
-limits. Process startup and inter-process communication are slower than in
-compiled languages. In addition, the Global Interpreter Lock (GIL) restricts
-efficient use of threads [@beazley2010gil], forcing parallelism to rely on
-heavy-weight process management. These factors made Python implementations
-inefficient and unsuitable for global CN mapping.
+This Python-based parallelization reduced runtime compared to the serial
+version but still faced major limits. Process startup and inter-process
+communication are slower than in compiled languages. In addition, the Global
+Interpreter Lock (GIL) restricts efficient use of threads [@beazley2010gil],
+forcing parallelism to rely on heavy-weight process management. These factors
+made Python implementations inefficient and unsuitable for global CN mapping.
 
 ## C MPI/OpenMP
 
 A hybrid MPI/OpenMP parallelization scheme was implemented in C, using MPI 
-for distributed memory parallelism and OpenMP [@dagum1998openmp] for shared memory parallelism.
-In this design, MPI forked individual processes for each block, while the
-internal CN computation logic within a block was parallelized with
-OpenMP. The aim was to combine coarse-grain parallelism
-across nodes with fine-grain threading within each process. In principle
-this reduces MPI rank counts and exploits shared memory at the node level
-[@gropp1999mpi].
+for distributed memory parallelism and OpenMP [@dagum1998openmp] for shared
+memory parallelism. In this design, MPI forked individual processes for each
+block, while the internal CN computation logic within a block was parallelized
+with OpenMP. The aim was to combine coarse-grain parallelism across nodes with
+fine-grain threading within each process. In principle this reduces MPI rank
+counts and exploits shared memory at the node level [@gropp1999mpi].
 
 In practice, the hybrid model gave little improvement. Most of the runtime
 was still dominated by I/O. Since GDAL raster writing is not thread-safe
@@ -271,9 +274,9 @@ ranks.](fig1-omp.jpg){#fig:hybrid width="100%"}
 
 The standalone MPI implementation achieved strong scaling across ranks,
 with computation times decreasing from ~7,800 seconds at 1 rank to
-~845 seconds at 16 ranks (\autoref{fig:mpi-time}). This performance confirms that the
-implementation can process increasingly large workloads in shorter wall
-times as ranks increase.
+~845 seconds at 16 ranks (\autoref{fig:mpi-time}). This performance
+confirms that the implementation can process increasingly large workloads
+in shorter wall times as ranks increase.
 
 \@ref{tab:mpi-summary} summarizes performance metrics for the MPI-only
 implementation up to 16 ranks, including runtime, CPU usage, speedup,
