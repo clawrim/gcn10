@@ -208,6 +208,48 @@ Now your executable is located at:
 C:\USERNAME\gcn10\src\gcn10.exe
 ```
 
+### 3.4 HPC
+
+#### 3.4.1 Load Dependencies Modules
+
+Before compiling, load the required toolchain modules.
+Versions may vary by the cluster, check `module spider` or `module avail`
+for the correct ones. 
+
+On the New Mexico State [Discovery](https://doi.org/10.1145/3437359.3465610)
+cluster, the setup is; 
+
+```bash
+module purge
+module load spack/2023a
+module load gcc/12.2.0-2023a-gcc_8.5.0-e643dqu
+module load cmake/3.24.3-2023a-gcc_12.2.0-l6ogg2k
+module load openmpi/4.1.4-2023a-gcc_12.2.0-slurm-pmix_v4-vv2mnh6
+module load gdal/3.6.2-2023a-gcc_12.2.0-cuda-phafc4i
+```
+Check that the compilers and the libraries are visible
+
+```bash
+which mpicc mpicxx gdal-config cmake
+mpicc -show
+gdal-config --version
+```
+#### 3.4.2 Configure and Build
+
+- Assuming the source code is cloned in ~/usr/local/src/
+
+```bash
+cd gcn10
+mkdir build
+cd build
+cmake ..;make
+```
+- Verbose compilation for debugging
+```bash
+( [ -d build ] && rm -rf build; mkdir build; cd build; { cmake .. && cmake --build . -v; } >& build.log )
+```
+The build log (`build.log`) and the executable (`gcn10`) will be created in `gcn10/src/build/`
+
 ## 4. Running the Program
 
 ### 4.1. Linux
