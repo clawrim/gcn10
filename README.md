@@ -29,15 +29,16 @@ suitable for hydrologic modeling and runoff estimation.
          * [3.4.1 Load Dependencies Modules](#341-load-dependencies-modules)
          * [3.4.2 Configure and Build](#342-configure-and-build)
    * [4. Running the Program](#4-running-the-program)
-      * [4.1. Linux](#41-linux)
-      * [4.2. Windows](#42-windows)
+      * [4.1 Testing](#41-testing)
+      * [4.2. Linux](#42-linux)
+      * [4.3. Windows](#43-windows)
    * [5. Summary](#5-summary)
    * [6. Troubleshooting](#6-troubleshooting)
    * [7. Outputs](#7-outputs)
 * [Acknowledgments](#acknowledgments)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: abd, at: Wed Aug 20 13:21:00 MDT 2025 -->
+<!-- Added by: abd, at: Thu Aug 21 16:14:23 MDT 2025 -->
 
 <!--te-->
 
@@ -261,19 +262,45 @@ The executable (`gcn10`) will be installed in `<CMAKE_INSTALL_PREFIX>/bin` (e.g.
 
 ## 4. Running the Program
 
-### 4.1. Linux
+### 4.1 Testing
+For testing the installation of the program on any OS:
+
+```bash
+cd test/
+chmod a+x run_test.py && ./run_test.py
+
+# or
+
+python3 run_test.py
+# this will run the test with 8 processes by default.
+```
+If you want to change the number of processes;
+```bash
+./run_test.py n
+# where n can be [1-8] e.g;
+./run_test.py 4
+```
+This will create progress log in logs/ subdirectory and output rasters in
+`cn_raster_drained` and `cn_raster_undrained` subdirectories in the
+`gcn10/src/test/` directory.
+
+> NOTE: Running more that 8 blocks will not have any additional advantages because
+blocks.txt contains only 8 blocks
+
+### 4.2. Linux
 ```bash
 # use your CMAKE_INSTALL_PREFIX if it's different from $HOME/usr/local
 # e.g., export PATH="<CMAKE_INSTALL_PREFIX>/bin:$PATH"
 export PATH="$HOME/usr/local/bin:$PATH"
 
-cd src/test/
-
 # serial
-gcn10 -c config.txt
 
-# serial with block list + overwrite
+# start generating global CN rasters for all blocks
+gcn10 -c config.txt
+# serial with blocks list and overwrite
 gcn10 -c config.txt -l blocks.txt -o
+
+# parallel
 
 # mpi (openmpi or mpich)
 mpirun -n 4 gcn10 -c config.txt -o
@@ -281,7 +308,7 @@ mpirun -n 4 gcn10 -c config.txt -o
 mpiexec -n 4 gcn10 -c config.txt -o
 ```
 
-### 4.2. Windows
+### 4.3. Windows
 
 From the `src\test\` directory:
 ```cmd
