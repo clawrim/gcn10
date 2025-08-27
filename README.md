@@ -1,5 +1,7 @@
 # GCN10: Global Curve Number 10m
 
+[![status](https://joss.theoj.org/papers/821a5ce21f9dff42b866bad7400f2cc7/status.svg)](https://joss.theoj.org/papers/821a5ce21f9dff42b866bad7400f2cc7)
+
 GCN10 is a high-resolution, open-source global Curve Number (CN) dataset generator.
 It combines ESA WorldCover land cover data and HYSOGs250m soil data to create CN rasters
 suitable for hydrologic modeling and runoff estimation.
