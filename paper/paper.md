@@ -27,7 +27,7 @@ bibliography: paper.bib
 
 The Soil Conservation Service (SCS) Curve Number (CN) method remains one of
 the most widely adopted approaches for estimating runoff volume and peak
-discharge at the watershed scale [@usda1972tr55; @usda1986tr55]. As the name
+discharge at the watershed scale [@usda2019neh630ch9; @usda1986tr55]. As the name
 implies, the CN value is the core input to this method, and generating
 high-resolution CN raster maps for large watersheds or continental domains is
 computationally demanding. It is becoming increasingly critical to simulate
@@ -42,15 +42,15 @@ can provide better processing performance than traditional GIS platforms.
 
 The Global CN 10 m (GCN10) is a high-performance framework written in C with
 multi-node distributed parallelization in mind using the Message Passing
-Interface (MPI) [@gropp1999mpi]. It generates global CN datasets for hydrologic
+Interface (MPI) [@gropp1994mpi]. It generates global CN datasets for hydrologic
 modeling and runoff estimation. The program uses ESA WorldCover 10 m land cover
 data [@zanaga2021worldcover], accessed through a GDAL virtual raster from the
 QGIS Curve Number Generator Plugin [@siddiqui2020curve]. It combines this land
 cover data with the 250 m Hydrologic Soil Group (HYSOGs250m) dataset
 [@ross2018hysogs]. CN values are assigned through a lookup table developed from
-[@usdachapter9]. This produces CN rasters for global or regional use.
+[@usda2019neh630ch9]. This produces CN rasters for global or regional use.
 MPI enables distributed-memory parallelization using multiple processes
-[@gropp1999mpi]. GCN10 splits large rasters into blocks and processes them
+[@gropp1994mpi]. GCN10 splits large rasters into blocks and processes them
 across many cores or nodes in HPC systems. The block-based design provides
 near-linear scaling on modern hardware
 [@amdahl1967validity; @gustafson1988reevaluating]. As a result, terabyte-scale
@@ -83,7 +83,7 @@ In the GCN10 workflow, the globe is divided into 2,651 blocks. Each block
 produces 18 rasters---a combination of three hydrologic conditions (poor, fair,
 and good), three antecedent runoff conditions (ARC I, II, and III) and two
 drainage conditions (drained and undrained) for dual hydrologic soil groups
-[@usdachapter7]. This $3 \times 3 \times 2$ combination results in 18 unique
+[@usda2004neh630ch7]. This $3 \times 3 \times 2$ combination results in 18 unique
 combinations for CN, and each raster has 36,000 × 36,000 cells
 (about 1.3 billion cells). A single raster stored as uint8 requires about
 1.3 GB in memory. One block with 18 rasters requires about 23 GB. When extended
@@ -147,7 +147,7 @@ memory parallelism. In this design, MPI forked individual processes for each
 block, while the internal CN computation logic within a block was parallelized
 with OpenMP. The aim was to combine coarse-grain parallelism across nodes with
 fine-grain threading within each process. In principle this reduces MPI rank
-counts and exploits shared memory at the node level [@gropp1999mpi].
+counts and exploits shared memory at the node level [@gropp1994mpi].
 
 In practice, the hybrid model gave little improvement. Most of the runtime
 was still dominated by I/O. Since GDAL raster writing is not thread-safe
@@ -192,7 +192,7 @@ design included the following elements:
 
 - I/O and storage
   - Local NVMe SSD storage only; no network file systems used.
-  - Outputs written as GeoTIFF rasters [@ritter1994geotiff] with LZW
+  - Outputs written as GeoTIFF rasters [@ritter1995geotiff] with LZW
     compression [@welch1984lzw], uint8 pixels.
   - Internal tiling enabled with GDAL default tile sizes [@gdal2020].
   - GDAL cache left at default settings.

@@ -1,19 +1,21 @@
-@misc{usda1972tr55,
-  author       = {{United States Department of Agriculture, Natural Resources Conservation Service}},
-  title        = {National Engineering Handbook, Part 630 Hydrology},
-  number       = {(210--630--H., Amend. 88)},
-  year         = {2019},
-  month        = aug,
-  note         = {Chapter 9: Hydrologic Soil-Cover Complexes},
-  url          = {https://directives.nrcs.usda.gov/sites/default/files2/1712930592/29495.pdf}
+@misc{usda2019neh630ch9,
+  author      = {{U.S. Department of Agriculture, Natural Resources Conservation Service}},
+  title       = {National Engineering Handbook, Part 630: Hydrology. Chapter 9: Hydrologic Soil-Cover Complexes},
+  year        = {2004},
+  number      = {Title 210--630--H, Amend. 88},
+  address     = {Washington, DC},
+  institution = {USDA NRCS},
+  url         = {https://directives.nrcs.usda.gov/sites/default/files2/1712930592/29495.pdf}
 }
 
 @techreport{usda1986tr55,
-  title     = {Urban Hydrology for Small Watersheds, TR-55},
-  author    = {{USDA Soil Conservation Service}},
-  year      = {1986},
-  institution = {U.S. Department of Agriculture},
-  number    = {Technical Release 55}
+  author      = {{U.S. Department of Agriculture, Soil Conservation Service}},
+  title       = {Urban Hydrology for Small Watersheds (TR-55)},
+  year        = {1986},
+  number      = {Technical Release 55},
+  address     = {Washington, DC},
+  institution = {USDA SCS, Engineering Division},
+  url         = {https://www.oregon.gov/odot/hydraulics/Docs_Hydraulics_Manual/Hydraulics-07-G-Urban-Hydrology-Small-Watersheds.pdf},
 }
 
 @article{wing2019floodrisk,
@@ -39,22 +41,24 @@
   doi     = {10.5281/zenodo.5571936}
 }
 
-@book{gropp1999mpi,
-  title     = {Using MPI: Portable Parallel Programming with the Message Passing
-               Interface},
+@book{gropp1994mpi,
+  title     = {Using MPI: Portable Parallel Programming with the Message Passing Interface},
   author    = {Gropp, William and Lusk, Ewing and Skjellum, Anthony},
-  year      = {1999},
-  publisher = {MIT Press}
+  year      = {1994},
+  publisher = {MIT Press},
+  address   = {Cambridge, MA},
+  isbn      = {9780262571043}
 }
 
-@article{amdahl1967validity,
-  title   = {Validity of the Single Processor Approach to Achieving Large Scale
-             Computing Capabilities},
-  author  = {Amdahl, Gene M.},
-  journal = {AFIPS Conference Proceedings},
-  volume  = {30},
-  pages   = {483--485},
-  year    = {1967}
+@inproceedings{amdahl1967validity,
+  author    = {Amdahl, Gene M.},
+  title     = {Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities},
+  booktitle = {Proceedings of the April 18–20, 1967 Spring Joint Computer Conference (AFIPS '67 Spring)},
+  year      = {1967},
+  pages     = {483--485},
+  publisher = {ACM},
+  address   = {New York, NY, USA},
+  doi       = {10.1145/1465482.1465560}
 }
 
 @article{gustafson1988reevaluating,
@@ -64,16 +68,22 @@
   volume  = {31},
   number  = {5},
   pages   = {532--533},
-  year    = {1988}
+  year    = {1988},
+  month   = may,
+  doi     = {10.1145/42411.42415}
 }
 
 @incollection{warmerdam2008gdal,
-  title     = {The Geospatial Data Abstraction Library},
   author    = {Warmerdam, Frank},
+  title     = {The Geospatial Data Abstraction Library},
   booktitle = {Open Source Approaches in Spatial Data Handling},
-  pages     = {87--104},
+  series    = {Advances in Geographic Information Science},
+  volume    = {2},
+  publisher = {Springer},
+  address   = {Berlin, Heidelberg},
   year      = {2008},
-  publisher = {Springer}
+  pages     = {87--104},
+  doi       = {10.1007/978-3-540-74831-1_5}
 }
 
 @article{stodden2016reproducibility,
@@ -87,19 +97,21 @@
   doi     = {10.1126/science.aah6168}
 }
 
-@manual{python-multiprocessing,
-  title     = {Python Multiprocessing Library Documentation},
-  author    = {{Python Software Foundation}},
-  year      = {2023},
-  note      = {Available at: \url{https://docs.python.org/3/library/multiprocessing.html}}
+@online{python-multiprocessing,
+  author  = {{Python Software Foundation}},
+  title   = {Python Multiprocessing Library Documentation},
+  year    = {2023},
+  url     = {https://docs.python.org/3/library/multiprocessing.html},
+  urldate = {2025-08-26}
 }
 
-@inproceedings{beazley2010gil,
-  title     = {Understanding the Python GIL},
-  author    = {Beazley, David},
-  booktitle = {Python Conference (PyCON)},
-  year      = {2010},
-  note      = {Talk and slides available at: \url{http://www.dabeaz.com/GIL/}}
+@online{beazley2010gil,
+  author  = {Beazley, David},
+  title   = {Understanding the Python GIL},
+  year    = {2010},
+  url     = {http://www.dabeaz.com/GIL/},
+  urldate = {2025-08-26},
+  note    = {Talk presented at PyCon 2010}
 }
 
 @article{dagum1998openmp,
@@ -114,18 +126,22 @@
 }
 
 @techreport{mpi1994standard,
-  title     = {MPI: A Message-Passing Interface Standard},
-  author    = {{Message Passing Interface Forum}},
-  year      = {1994},
-  institution = {University of Tennessee}
+  title       = {MPI: A Message-Passing Interface Standard},
+  author      = {{Message Passing Interface Forum}},
+  institution = {University of Tennessee, Knoxville},
+  year        = {1994},
+  month       = may,
+  note        = {Final report (Version 1.0), LaTeX-processed May 5, 1994. ACM redirection ID: 10.5555/898758},
+  url         = {https://www.cs.utexas.edu/~rossbach/cs380p/papers/mpi-standard.pdf},
 }
 
 @misc{gdal-rfc101,
-  author = {{GDAL Development Team}},
-  title  = {RFC 101: Raster dataset read-only thread-safety},
-  year   = {2024},
-  url    = {https://gdal.org/en/stable/development/rfc/rfc101_raster_dataset_threadsafety.html},
-  note   = {GDAL Project}
+  author       = {{GDAL Development Team}},
+  title        = {RFC 101: Raster Dataset Read-Only Thread-Safety},
+  year         = {2024},
+  howpublished = {GDAL Project Documentation},
+  url          = {https://gdal.org/en/stable/development/rfc/rfc101_raster_dataset_threadsafety.html},
+  note         = {Accessed: 2025-08-26}
 }
 
 @article{ross2018hysogs,
@@ -139,29 +155,37 @@
   doi       = {10.1038/sdata.2018.91}
 }
 
-@techreport{ritter1994geotiff,
-  title     = {GeoTIFF format specification},
-  author    = {Ritter, Niles and Ruth, Mike},
-  year      = {1994},
-  institution = {SPOT Image}
+@techreport{ritter1995geotiff,
+  title        = {GeoTIFF Format Specification, Revision 1.0},
+  author       = {Ritter, Niles and Ruth, Mike},
+  institution  = {SPOT Image Corp. and NASA Jet Propulsion Laboratory},
+  year         = {1995},
+  month        = nov,
+  note         = {Version 1.8.2 released November 1995; public domain specification},
+  url          = {http://trac.osgeo.org/geotiff/},
 }
 
-@inproceedings{welch1984lzw,
-  title     = {A technique for high-performance data compression},
-  author    = {Welch, Terry},
-  booktitle = {Computer},
+@article{welch1984lzw,
+  author    = {Welch, Terry A.},
+  title     = {A Technique for High-Performance Data Compression},
+  journal   = {Computer},
   volume    = {17},
   number    = {6},
   pages     = {8--19},
   year      = {1984},
-  publisher = {IEEE}
+  month     = jun,
+  publisher = {IEEE},
+  doi       = {10.1109/MC.1984.1659158}
 }
 
 @misc{gdal2020,
-  title     = {GDAL/OGR Geospatial Data Abstraction software Library},
-  author    = {{GDAL Development Team}},
-  year      = {2020},
-  note      = {Open Source Geospatial Foundation. Available at: \url{https://gdal.org/}}
+  author       = {{GDAL Development Team}},
+  title        = {GDAL/OGR Geospatial Data Abstraction Software Library},
+  year         = {2020},
+  howpublished = {Open Source Geospatial Foundation},
+  url          = {https://gdal.org/},
+  doi          = {10.5281/zenodo.15869424},
+  note         = {Accessed: 2025-08-26}
 }
 
 @misc{posix2024,
@@ -178,10 +202,12 @@
 }
 
 @misc{intel2023ht,
-  title     = {Intel Hyper-Threading Technology},
-  author    = {{Intel Corporation}},
-  year      = {2023},
-  note      = {Available at: \url{https://www.intel.com/content/www/us/en/architecture-and-technology/hyper-threading.html}}
+  author       = {{Intel Corporation}},
+  title        = {Intel Hyper-Threading Technology},
+  year         = {2023},
+  howpublished = {Intel Corporation Website},
+  url          = {https://www.intel.com/content/www/us/en/architecture-and-technology/hyper-threading/hyper-threading-technology.html},
+  note         = {Accessed: 2025-08-26}
 }
 
 @misc{siddiqui2020curve,
@@ -192,25 +218,16 @@
   note         = {Accessed: 2025-08-17}
 }
 
-@online{usdachapter9,
-  author       = {{USDA NRCS}},
-  title        = {National Engineering Handbook, Part 630 Hydrology: Chapter 9 - Hydrologic Soil-Cover Complexes (210-VI-NEH)},
-  year         = {2004},
-  month        = jul,
-  publisher    = {USDA eDirectives},
-  url          = {https://directives.sc.egov.usda.gov/landingpage/79824ad0-6672-4e3b-b100-86d87993f172},
-  note         = {Accessed July 8, 2024},
-}
-
-
-@online{usdachapter7,
-  author       = {{USDA NRCS}},
-  title        = {National Engineering Handbook, Part 630 Hydrology: Chapter 7 - Hydrologic Soil Group (210-VI-NEH)},
-  year         = {2004},
-  month        = jul,
-  publisher    = {USDA eDirectives},
-  url          = {hhttps://directives.nrcs.usda.gov/sites/default/files2/1712930597/11905.pdf},
-  note         = {Accessed July 8, 2024},
+@misc{usda2004neh630ch7,
+  author      = {{U.S. Department of Agriculture, Natural Resources Conservation Service}},
+  title       = {National Engineering Handbook, Part 630: Hydrology. Chapter 7: Hydrologic Soil Group (210-VI-NEH)},
+  year        = {2004},
+  month       = jul,
+  number      = {210-VI-NEH},
+  institution = {USDA NRCS},
+  address     = {Washington, DC},
+  url         = {https://directives.nrcs.usda.gov/sites/default/files2/1712930597/11905.pdf},
+  note        = {No DOI assigned. Accessed 2024-07-08}
 }
 
 @article{gorelick2017gee,
