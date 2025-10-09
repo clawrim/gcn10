@@ -1,0 +1,9 @@
+# Cross-platform MPI matrix
+mpi:
+  - mpich      # [linux or osx]
+  - openmpi    # [linux or osx]
+  - msmpi      # [win]
+
+# silence numpy variant warning (we don't use numpy at all)
+numpy:
+  - 1.26

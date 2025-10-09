@@ -1,0 +1,55 @@
+{% set name = "gcn10" %}
+{% set version = "0.1.0" %}     # set to your tag when you cut a release
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+# For local builds we pull from the repo root. For conda-forge, switch to a tarball + sha256.
+source:
+  path: ../..
+
+build:
+  number: 0
+  # Keep RPATHs fixed and prefer Ninja via toolchain CMAKE_ARGS
+  run_exports:
+    - {{ pin_subpackage(name, max_pin='x.x') }}
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - cmake
+    - ninja
+    - pkg-config              # [unix]
+    - {{ mpi }}               # makes MPI headers/launcher visible to CMake
+    - libgdal-core            # [unix]
+    - gdal                    # [win]
+  host:
+    - {{ mpi }}
+    - libgdal-core            # [unix]
+    - gdal                    # [win]
+  run:
+    - {{ mpi }}
+    - libgdal-core            # [unix]
+    - gdal                    # [win]
+
+test:
+  commands:
+    # existence + basic CLI
+    - gcn10 --help
+    - gcn10 --version
+    # binary location checks
+    - test -x $PREFIX/bin/gcn10                       # [unix]
+    - if not exist %PREFIX%\\Library\\bin\\gcn10.exe exit 1   # [win]
+    - where gcn10                                             # [win]
+
+about:
+  home: https://github.com/clawrim/gcn10
+  summary: MPI-Parallelized High-Resolution Curve Number Generator.
+  # IMPORTANT: set this to your repo's actual license identifier
+  license: GPL 3.0
+  license_file: COPYING
+
+extra:
+  recipe-maintainers:
+    - abdazzam

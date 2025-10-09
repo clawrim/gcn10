@@ -39,7 +39,7 @@ endif()
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
     target_compile_options(gcn10 PRIVATE /W4 /O2 /D_CRT_SECURE_NO_WARNINGS)
 else()
-    target_compile_options(gcn10 PRIVATE -Wall -Werror -O3 -march=native)
+    target_compile_options(gcn10 PRIVATE -Wall -O3)
 endif()
 
 # set output executable extension for Windows

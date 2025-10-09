@@ -6,6 +6,53 @@
 #include <stdlib.h>
 #include "global.h"
 
+/* simple cli helpers for --help / --version
+   keep usage terse; point to readme for full docs */
+
+#ifndef GCN10_VERSION
+#define GCN10_VERSION "0.1.0"
+#endif
+
+static void gcn10_print_usage(FILE *fp)
+{
+    fprintf(fp,
+        "gcn10 - high-resolution mpi-parallelized curve number generator\n"
+        "usage:\n"
+        "  mpirun  -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
+        "  mpiexec -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
+        "  gcn10 --help | --version\n"
+        "\n"
+        "options:\n"
+        "  --config <file>    path to config file (required)\n"
+        "  --blocks <file>    optional list of block ids to process\n"
+        "  --overwrite, -o    overwrite existing outputs if present (optional)\n"
+        "  --help             show this help and exit\n"
+        "  --version          print version and exit\n"
+        "\n"
+        "notes:\n"
+        "  <ranks> is the number of mpi processes to launch (e.g., -n 8 starts 8 ranks).\n"
+        "  use 'mpirun' on unix and 'mpiexec' on windows; both accept '-n <ranks>'.\n"
+    );
+}
+
+/* returns 1 when it handled a meta-flag and caller should exit(0) */
+static int gcn10_handle_meta_flags(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i) {
+        const char *a = argv[i];
+        if (a[0] != '-') continue;
+        if (!strcmp(a, "--help") || !strcmp(a, "-h")) {
+            gcn10_print_usage(stdout);
+            return 1;
+        }
+        if (!strcmp(a, "--version")) {
+            printf("gcn10 %s\n", GCN10_VERSION);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rank, size, n_blocks, i;
@@ -13,6 +60,11 @@ int main(int argc, char *argv[])
     int *block_ids;
     bool overwrite;
     char msg[8192];
+
+    /* handle --help / --version and exit without touching mpi/gdal */
+    if (gcn10_handle_meta_flags(argc, argv)) {
+        return 0;
+    }
 
     /* initialize variables */
     rank = 0;
@@ -43,10 +95,13 @@ int main(int argc, char *argv[])
 
     /* validate config file */
     if (!conf_file) {
-        if (rank == 0) {
-            fprintf(stderr, "[rank 0] missing -c config.txt\n");
-        }
-        MPI_Abort(MPI_COMM_WORLD, 1);
+	if (rank == 0) {
+	    fprintf(stderr,
+		    "[rank %d] missing -c/--config <file>; see 'gcn10 -h' for usage.\n",
+		    rank);
+	    fflush(stderr);
+	}
+	MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     /* read and print config */
