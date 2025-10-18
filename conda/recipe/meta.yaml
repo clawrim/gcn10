@@ -11,9 +11,6 @@ source:
 
 build:
   number: 0
-  # Keep RPATHs fixed and prefer Ninja via toolchain CMAKE_ARGS
-  run_exports:
-    - {{ pin_subpackage(name, max_pin='x.x') }}
 
 requirements:
   build:
@@ -21,15 +18,19 @@ requirements:
     - cmake
     - ninja
     - pkg-config              # [unix]
-    - {{ mpi }}               # makes MPI headers/launcher visible to CMake
+    - openmpi                 # [unix]
+    - msmpi                   # [win]
     - libgdal-core            # [unix]
     - gdal                    # [win]
+    - vswhere                 # [win]
   host:
-    - {{ mpi }}
+    - msmpi                   # [win]
+    - openmpi                 # [unix]
     - libgdal-core            # [unix]
     - gdal                    # [win]
   run:
-    - {{ mpi }}
+    - msmpi                   # [win]
+    - openmpi                 # [unix]
     - libgdal-core            # [unix]
     - gdal                    # [win]
 

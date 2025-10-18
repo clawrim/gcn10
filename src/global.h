@@ -11,6 +11,7 @@
 #include <cpl_string.h>
 #include <ogr_api.h>
 #include <ogr_srs_api.h>
+#include "compat.h"
 
 #ifdef _WIN32
 #include <direct.h>
