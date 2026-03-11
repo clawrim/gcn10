@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "GCN10: Global Curve Number 10m"
+version: "0.1.0"
+authors:
+  - family-names: Azzam
+    given-names: Abdullah
+  - family-names: Cho
+    given-names: Huidae
+date-released: "2026-01-01"
+url: "https://github.com/clawrim/gcn10"
+message: >
+  If you use this software, please cite the associated manuscript.
+preferred-citation:
+  type: manuscript
+  authors:
+    - family-names: Azzam
+      given-names: Abdullah
+    - family-names: Cho
+      given-names: Huidae
+  title: "GCN10: An MPI-Parallelized Framework for Processing Global Curve Number Rasters for Hydrologic Modeling"
+  journal: "SoftwareX"
+  year: 2026
+  status: "under review"
