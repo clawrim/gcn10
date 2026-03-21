@@ -4,8 +4,10 @@ version: "0.1.0"
 authors:
   - family-names: Azzam
     given-names: Abdullah
+    orcid: "https://orcid.org/0000-0003-4314-1340"
   - family-names: Cho
     given-names: Huidae
+    orcid: "https://orcid.org/0000-0003-1878-1274"
 date-released: "2026-01-01"
 url: "https://github.com/clawrim/gcn10"
 message: >
