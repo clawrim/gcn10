@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include "global.h"
+#include <errno.h>
 
 /* load lookup table from csv file */
 static void
