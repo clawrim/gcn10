@@ -21,13 +21,14 @@ static void gcn10_print_usage(FILE *fp)
         "  mpirun  -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
         "  mpiexec -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
         "  gcn10 --help | --version\n"
+        "  gcn10 --help | -h | --version | -v\n"
         "\n"
         "options:\n"
-        "  --config <file>    path to config file (required)\n"
-        "  --blocks <file>    optional list of block ids to process\n"
-        "  --overwrite, -o    overwrite existing outputs if present (optional)\n"
-        "  --help             show this help and exit\n"
-        "  --version          print version and exit\n"
+        "  --config, -c <file>	path to config file (required)\n"
+        "  --blocks, -b <file>	optional list of block ids to process\n"
+        "  --overwrite, -o	overwrite existing outputs if present (optional)\n"
+        "  --help, -h		show this help and exit\n"
+        "  --version, -v	print version and exit\n"
         "\n"
         "notes:\n"
         "  <ranks> is the number of mpi processes to launch (e.g., -n 8 starts 8 ranks).\n"
@@ -45,7 +46,7 @@ static int gcn10_handle_meta_flags(int argc, char **argv)
             gcn10_print_usage(stdout);
             return 1;
         }
-        if (!strcmp(a, "--version")) {
+        if (!strcmp(a, "--version") || !strcmp(a, "-v")) {
             printf("gcn10 %s\n", GCN10_VERSION);
             return 1;
         }
@@ -81,16 +82,18 @@ int main(int argc, char *argv[])
 
     /* parse command-line arguments */
     for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
-            conf_file = argv[++i];
-        }
-        else if (strcmp(argv[i], "-l") == 0 && i + 1 < argc) {
-            use_list_mode = true;
-            block_ids_file = argv[++i];
-        }
-        else if (strcmp(argv[i], "-o") == 0) {
-            overwrite = true;
-        }
+	if ((!strcmp(argv[i], "-c") || !strcmp(argv[i], "--config")) &&
+		i + 1 < argc) {
+	    conf_file = argv[++i];
+	}
+	else if ((!strcmp(argv[i], "-l") || !strcmp(argv[i], "--blocks")) &&
+		i + 1 < argc) {
+	    use_list_mode = true;
+	    block_ids_file = argv[++i];
+	}
+	else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--overwrite")) {
+	    overwrite = true;
+	}
     }
 
     /* validate config file */
