@@ -16,24 +16,23 @@
 static void gcn10_print_usage(FILE *fp)
 {
     fprintf(fp,
-        "gcn10 - high-resolution mpi-parallelized curve number generator\n"
-        "usage:\n"
-        "  mpirun  -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
-        "  mpiexec -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
-        "  gcn10 --help | --version\n"
-        "  gcn10 --help | -h | --version | -v\n"
-        "\n"
-        "options:\n"
-        "  --config, -c <file>	path to config file (required)\n"
-        "  --blocks, -b <file>	optional list of block ids to process\n"
-        "  --overwrite, -o	overwrite existing outputs if present (optional)\n"
-        "  --help, -h		show this help and exit\n"
-        "  --version, -v	print version and exit\n"
-        "\n"
-        "notes:\n"
-        "  <ranks> is the number of mpi processes to launch (e.g., -n 8 starts 8 ranks).\n"
-        "  use 'mpirun' on unix and 'mpiexec' on windows; both accept '-n <ranks>'.\n"
-    );
+            "gcn10 - high-resolution mpi-parallelized curve number generator\n"
+            "usage:\n"
+            "  mpirun  -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
+            "  mpiexec -n <ranks>  gcn10 --config <config.txt> [--blocks <blocks.txt>] [--overwrite]\n"
+            "  gcn10 --help | --version\n"
+            "  gcn10 --help | -h | --version | -v\n"
+            "\n"
+            "options:\n"
+            "  --config, -c <file>	path to config file (required)\n"
+            "  --blocks, -b <file>	optional list of block ids to process\n"
+            "  --overwrite, -o	overwrite existing outputs if present (optional)\n"
+            "  --help, -h		show this help and exit\n"
+            "  --version, -v	print version and exit\n"
+            "\n"
+            "notes:\n"
+            "  <ranks> is the number of mpi processes to launch (e.g., -n 8 starts 8 ranks).\n"
+            "  use 'mpirun' on unix and 'mpiexec' on windows; both accept '-n <ranks>'.\n");
 }
 
 /* returns 1 when it handled a meta-flag and caller should exit(0) */
@@ -41,7 +40,9 @@ static int gcn10_handle_meta_flags(int argc, char **argv)
 {
     for (int i = 1; i < argc; ++i) {
         const char *a = argv[i];
-        if (a[0] != '-') continue;
+
+        if (a[0] != '-')
+            continue;
         if (!strcmp(a, "--help") || !strcmp(a, "-h")) {
             gcn10_print_usage(stdout);
             return 1;
@@ -82,29 +83,29 @@ int main(int argc, char *argv[])
 
     /* parse command-line arguments */
     for (i = 1; i < argc; i++) {
-	if ((!strcmp(argv[i], "-c") || !strcmp(argv[i], "--config")) &&
-		i + 1 < argc) {
-	    conf_file = argv[++i];
-	}
-	else if ((!strcmp(argv[i], "-l") || !strcmp(argv[i], "--blocks")) &&
-		i + 1 < argc) {
-	    use_list_mode = true;
-	    block_ids_file = argv[++i];
-	}
-	else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--overwrite")) {
-	    overwrite = true;
-	}
+        if ((!strcmp(argv[i], "-c") || !strcmp(argv[i], "--config")) &&
+            i + 1 < argc) {
+            conf_file = argv[++i];
+        }
+        else if ((!strcmp(argv[i], "-l") || !strcmp(argv[i], "--blocks")) &&
+                 i + 1 < argc) {
+            use_list_mode = true;
+            block_ids_file = argv[++i];
+        }
+        else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--overwrite")) {
+            overwrite = true;
+        }
     }
 
     /* validate config file */
     if (!conf_file) {
-	if (rank == 0) {
-	    fprintf(stderr,
-		    "[rank %d] missing -c/--config <file>; see 'gcn10 -h' for usage.\n",
-		    rank);
-	    fflush(stderr);
-	}
-	MPI_Abort(MPI_COMM_WORLD, 1);
+        if (rank == 0) {
+            fprintf(stderr,
+                    "[rank %d] missing -c/--config <file>; see 'gcn10 -h' for usage.\n",
+                    rank);
+            fflush(stderr);
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     /* read and print config */
