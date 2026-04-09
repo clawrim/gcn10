@@ -5,13 +5,12 @@ project(gcn10 LANGUAGES C)
 # language/flags
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-
-# prefer config packages (conda-forge, vcpkg, etc.)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
 
-# MPI
+# prefer config packages (conda-forge, vcpkg, etc.)
 find_package(MPI REQUIRED COMPONENTS C)
-# Use the imported target if provided; fallback to a compatible INTERFACE target
+
+# MPI
 if(NOT TARGET MPI::MPI_C)
   add_library(MPI::MPI_C INTERFACE IMPORTED)
   if(MPI_C_LIBRARIES)
@@ -25,10 +24,15 @@ if(NOT TARGET MPI::MPI_C)
 endif()
 
 # GDAL
-# try CONFIG first (conda/vcpkg), then module fallback; always expose GDAL::GDAL
+# try CONFIG first, then module fallback;
+# resolve whichever imported target exists
 find_package(GDAL CONFIG QUIET)
-if(NOT GDAL_FOUND)
-  find_package(GDAL REQUIRED) # module mode
+if(TARGET gdal::gdal)
+  set(GDAL_TARGET gdal::gdal)
+elseif(TARGET GDAL::GDAL)
+  set(GDAL_TARGET GDAL::GDAL)
+else()
+  find_package(GDAL REQUIRED)
   if(NOT TARGET GDAL::GDAL)
     add_library(GDAL::GDAL UNKNOWN IMPORTED)
     if(GDAL_LIBRARY)
@@ -40,6 +44,7 @@ if(NOT GDAL_FOUND)
       target_include_directories(GDAL::GDAL INTERFACE "${GDAL_INCLUDE_DIR}")
     endif()
   endif()
+  set(GDAL_TARGET GDAL::GDAL)
 endif()
 
 # sources
@@ -51,10 +56,9 @@ set(SOURCES
   log.c
 )
 
+# link order matters on windows; target handles it for us
 add_executable(gcn10 ${SOURCES})
-
-# link order matters on windows; targets handle it for us
-target_link_libraries(gcn10 PRIVATE MPI::MPI_C GDAL::GDAL)
+target_link_libraries(gcn10 PRIVATE MPI::MPI_C ${GDAL_TARGET})
 
 # warnings/opts; math on non-MSVC
 if(MSVC)
@@ -69,4 +73,4 @@ endif()
 install(TARGETS gcn10 DESTINATION bin)
 
 # testing
-include(CTest) # enables 'enable_testing()' and CTest targets
+include(CTest)

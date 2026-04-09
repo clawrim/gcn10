@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include "global.h"
 #include <mpi.h>
+#include <errno.h>
 
 static FILE *log_fp = NULL;
 static int current_rank = 0;
