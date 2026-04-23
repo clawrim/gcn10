@@ -262,9 +262,195 @@ gdal-config --version
 
 The executable (`gcn10`) will be installed in `<CMAKE_INSTALL_PREFIX>/bin` (e.g., `~/usr/local/bin` following this Section).
 
-## 4. Running the Program
+## 4. Conda
 
-### 4.1 Testing
+This repository ships a standard conda recipe under conda/recipe/.
+The expected recipe files are:
+
+```text
+conda/recipe/meta.yaml
+conda/recipe/build.sh
+conda/recipe/bld.bat
+conda/recipe/conda_build_config.yaml
+```
+
+The build is driven by conda-build, with CMake invoked from the platform-specific recipe script.
+The commands below assume you start from the repository root.
+
+### 4.1. Linux and macOS
+
+The Unix-like build path is fully self-contained once Conda is installed.
+You do not need to drive CMake manually; conda-build creates the isolated build environment, resolves the recipe dependencies, and runs build.sh.
+
+1. Ensure Conda is installed and initialized for your shell, then verify it is available:
+
+   ```sh
+   conda --version
+   ```
+
+2. Install conda-build into the base environment:
+
+   ```sh
+   conda activate base
+   conda install -n base -c conda-forge conda-build
+   ```
+
+3. Clone the repository and enter it:
+
+   ```sh
+   git clone https://github.com/mabdazzam/gcn10
+   cd gcn10
+   ```
+
+4. Build the package from the recipe:
+
+   ```sh
+   conda activate base
+   conda build conda/recipe -c conda-forge --override-channels
+   ```
+
+5. If you want to see the exact output filename and path without performing the full build, run:
+
+   ```sh
+   conda build conda/recipe --output
+   ```
+
+6. Install the locally built package into a clean test environment:
+
+   ```sh
+   conda create -y -n gcn10test
+   conda activate gcn10test
+   conda install -y -c local -c conda-forge gcn10
+   ```
+
+7. Verify the installation:
+
+   ```sh
+   which gcn10
+   gcn10 --help
+   gcn10 --version
+   ```
+
+8. Run a basic MPI launch from any directory containing a valid config.txt and blocks.txt:
+
+   ```sh
+   mpiexec -n 4 gcn10 -c config.txt -l blocks.txt
+   ```
+
+The built package is written into Conda's local build cache under a platform directory such as conda-bld/linux-64/, conda-bld/osx-64/, or conda-bld/osx-arm64/.
+For a clean rebuild, remove old artifacts with:
+
+```sh
+conda build purge
+conda build purge-all
+```
+
+### 4.2. Windows
+
+The Windows build uses MSVC through the Visual Studio developer command prompt.
+Do not start from a plain cmd.exe session and do not try to drive the build outside the MSVC environment.
+Open the Visual Studio prompt first, activate Conda inside it, and then run conda-build.
+
+1. Install Conda if it is not already installed.
+
+2. Install Visual Studio Community Edition.
+   During installation, make sure the following components are selected:
+
+   - MSVC v143 - VS 2022 C++ x64/x86 build tools (Latest)
+   - Windows 11 SDK (10.0.26100.0)
+
+3. From the Start menu, open:
+
+   ```text
+   x64 Native Tools Command Prompt for VS 2022
+   ```
+
+4. Inside that MSVC prompt, activate your Conda installation.
+   Typical examples are:
+
+   ```bat
+   CALL %USERPROFILE%\miniconda3\condabin\conda.bat activate base
+   ```
+
+   or, for a system-wide install:
+
+   ```bat
+   CALL C:\ProgramData\miniconda3\condabin\conda.bat activate base
+   ```
+
+   If you installed Anaconda instead of Miniconda, replace miniconda3 with anaconda3.
+
+5. Confirm that the toolchain is available in the current session:
+
+   ```bat
+   conda --version
+   cl
+   cmake --version
+   ```
+
+6. Install conda-build into base if needed:
+
+   ```bat
+   conda install -n base -c conda-forge conda-build
+   ```
+
+7. Clone the repository and enter it:
+
+   ```bat
+   git clone https://github.com/mabdazzam/gcn10
+   cd gcn10
+   ```
+
+8. Build the package from the recipe:
+
+   ```bat
+   conda build conda\recipe -c conda-forge --override-channels
+   ```
+
+9. To print the exact output filename and path without performing the full build, run:
+
+   ```bat
+   conda build conda\recipe --output
+   ```
+
+10. Install the locally built package into a clean test environment:
+
+   ```bat
+   conda create -y -n gcn10test
+   conda activate gcn10test
+   conda install -y -c local -c conda-forge gcn10
+   ```
+
+11. Verify the installation:
+
+   ```bat
+   where gcn10
+   gcn10 --help
+   gcn10 --version
+   ```
+
+12. Run a basic MPI launch from any directory containing a valid config.txt and blocks.txt:
+
+   ```bat
+   mpiexec -n 4 gcn10 -c config.txt -l blocks.txt
+   ```
+
+The built Windows package is written into Conda's local build cache under conda-bld\win-64\.
+For a clean rebuild, remove old artifacts with:
+
+```bat
+conda build purge
+conda build purge-all
+```
+
+A few practical checks are usually enough to diagnose failures quickly.
+If conda is not recognized, you did not activate Conda inside the MSVC prompt.
+If cl is not recognized, you are not in the Visual Studio developer prompt or the C++ tools were not installed.
+If the build succeeds but gcn10 is not found afterward, activate the test environment again and reinstall from -c local.
+
+## 5. Running the Program
+
+### 5.1. Testing
 For testing the installation of the program on any OS:
 
 ```bash
@@ -289,7 +475,7 @@ This will create progress log in logs/ subdirectory and output rasters in
 > NOTE: Running more that 8 blocks will not have any additional advantages because
 blocks.txt contains only 8 blocks
 
-### 4.2. Linux
+### 5.2. Linux
 ```bash
 # use your CMAKE_INSTALL_PREFIX if it's different from $HOME/usr/local
 # e.g., export PATH="<CMAKE_INSTALL_PREFIX>/bin:$PATH"
@@ -310,7 +496,7 @@ mpirun -n 4 gcn10 -c config.txt -o
 mpiexec -n 4 gcn10 -c config.txt -o
 ```
 
-### 4.3. Windows
+### 5.3. Windows
 
 From the `src\test\` directory:
 ```cmd
@@ -324,7 +510,7 @@ gcn10.exe -c config.txt -l blocks.txt -o
 mpiexec -n 4 gcn10.exe -c config.txt -o
 ```
 
-## 5. Summary
+## 6. Summary
 
 | Task                 | Command / Action                                             |
 |----------------------|--------------------------------------------------------------|
@@ -336,7 +522,7 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
 | Copy executable      | `copy build\Release\gcn10.exe ..\`                           |
 | Run                  | `gcn10.exe -c config.txt [-l blocks.txt] [-o]`            |
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 - If gcn10 crashes, check:
   - Paths in config.txt are valid
@@ -349,7 +535,7 @@ mpiexec -n 4 gcn10.exe -c config.txt -o
 
 - Read the log files in written rankwise in the logs/ subdir for other errors. 
 
-## 7. Outputs
+## 8. Outputs
 
 - 18 Cloud Optimized GeoTIFFs per block (9 drained, 9 undrained)
 - Output directories:
