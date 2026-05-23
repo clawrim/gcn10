@@ -22,4 +22,8 @@ preferred-citation:
   title: "GCN10: An MPI-Parallelized Framework for Processing Global Curve Number Rasters for Hydrologic Modeling"
   journal: "SoftwareX"
   year: 2026
-  status: "under review"
+  volume: 34
+  pages: "102725"
+  year: 2026
+  month: 6
+  doi: 10.1016/j.softx.2026.102725
