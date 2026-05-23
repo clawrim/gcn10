@@ -3,7 +3,7 @@ title: "GCN10: Global Curve Number 10m"
 version: "0.1.0"
 authors:
   - family-names: Azzam
-    given-names: Abdullah
+    given-names: Muhammad Abdullah
     orcid: "https://orcid.org/0000-0003-4314-1340"
   - family-names: Cho
     given-names: Huidae
@@ -16,7 +16,7 @@ preferred-citation:
   type: manuscript
   authors:
     - family-names: Azzam
-      given-names: Abdullah
+      given-names: Muhammad Abdullah
     - family-names: Cho
       given-names: Huidae
   title: "GCN10: An MPI-Parallelized Framework for Processing Global Curve Number Rasters for Hydrologic Modeling"
